@@ -34,4 +34,10 @@ public class DictionaryEntry {
         }
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        return (word + affix).hashCode();
+    }
+
 }

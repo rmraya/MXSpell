@@ -211,7 +211,7 @@ public class AffixParser {
         }
     }
 
-    private void parseAffix(BufferedReader bufferedReader, String tagname, Map map) throws IOException, IOException {
+    private void parseAffix(BufferedReader bufferedReader, String tagname, Map map) throws IOException {
         if (!tokenizer.hasMoreTokens()) {
             MessageFormat mf = new MessageFormat("{0}:{1} : missing {2} information: {3}");
             Object[] args = { filename, "" + lineNr, tagname, line };

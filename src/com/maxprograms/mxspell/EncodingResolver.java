@@ -22,6 +22,10 @@ import java.util.TreeMap;
 
 public class EncodingResolver {
 
+    private EncodingResolver() {
+        // use getEncoding()
+    }
+
     public static Charset getEncoding(File filename) throws IOException {
         Charset charset = null;
         String declared = "";
