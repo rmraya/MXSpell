@@ -9,15 +9,29 @@
 *******************************************************************************/
 package com.maxprograms.mxspell;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Dictionary {
+
+    private static final Logger logger = System.getLogger(Dictionary.class.getName());
+
+    public static void main(String[] args) throws IOException {
+        new Dictionary("dictionaries\\es_UY.zip");
+    }
+
+    private Map<String, DictionaryEntry> wordsMap;
 
     public Dictionary(String zipFile) throws IOException {
         File zip = new File(zipFile);
@@ -60,7 +74,47 @@ public class Dictionary {
         new Dictionary(wordsFile, affixFile);
     }
 
-    public Dictionary(String wordsFile, String affixFile) {
+    public Dictionary(String wordsFile, String affixFile) throws IOException {
+        File words = new File(wordsFile);
+        if (!words.exists()) {
+            throw new IOException(".dic file is missing");
+        }
+        File affixes = new File(affixFile);
+        if (!affixes.exists()) {
+            throw new IOException(".aff file is missing");
+        }
+        loadWords(words);
+        loadAffixes(affixes);
+    }
 
+    private void loadWords(File words) throws IOException {
+        wordsMap = new HashMap<>();
+        try (FileReader reader = new FileReader(words)) {
+            try (BufferedReader buffered = new BufferedReader(reader)) {
+                int entries = 0;
+                String line = buffered.readLine();
+                try {
+                    entries = Integer.parseInt(line);
+                } catch (NumberFormatException nfe) {
+                    throw new IOException("Missing word count in .dic file");
+                }
+                while ((line = buffered.readLine()) != null) {
+                    int index = line.indexOf("/");
+                    if (index > 0) {
+                        String word = line.substring(0, index);
+                        String affix = line.substring(index + 1);
+                        wordsMap.put(word, new DictionaryEntry(word, affix));
+                    } else {
+                        wordsMap.put(line, new DictionaryEntry(line, null));
+                    }
+                }
+                if (entries != wordsMap.size()) {
+                    logger.log(Level.WARNING, "Expected entries: " + entries + ", entries read: " + wordsMap.size());
+                }
+            }
+        }
+    }
+
+    private void loadAffixes(File affixes) {
     }
 }
