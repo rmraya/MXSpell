@@ -21,8 +21,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -35,8 +35,7 @@ public class Dictionary {
     }
 
     private List<DictionaryEntry> wordsList;
-    private Map<String, List<Prefix>> prefixMap;
-    private Map<String, List<Suffix>> suffixMap;
+    private AffixParser parser;
 
     public Dictionary(String zipFile) throws IOException {
         File zip = new File(zipFile);
@@ -100,8 +99,8 @@ public class Dictionary {
             throw new IOException(mf.format(args));
         }
         Charset encoding = EncodingResolver.getEncoding(affixes);
-        loadWords(words, encoding);
         loadAffixes(affixes, encoding);
+        loadWords(words, encoding);
     }
 
     private void loadWords(File words, Charset encoding) throws IOException {
@@ -134,11 +133,10 @@ public class Dictionary {
                 }
             }
         }
+        Collections.sort(wordsList);
     }
 
     private void loadAffixes(File affixes, Charset encoding) throws IOException {
-        AffixParser parser = new AffixParser(affixes, encoding);
-        suffixMap = parser.getSuffixMap();
-        prefixMap = parser.getPrefixMap();
+        parser = new AffixParser(affixes, encoding);
     }
 }

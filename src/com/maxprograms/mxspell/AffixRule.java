@@ -9,21 +9,27 @@
 *******************************************************************************/
 package com.maxprograms.mxspell;
 
-public class Suffix extends Affix {
+public class AffixRule {
 
-    @Override
-    public boolean checkConditions(String word) {
-        int charidx = word.length() - 1;
-        for (int cond = numconds - 1; cond >= 0 && charidx >= 0; cond--) {
-            try {
-                if ((condition[word.charAt(charidx)] & 1 << cond) == 0) {
-                    return false;
-                }
-            } catch (IndexOutOfBoundsException e) {
-                return true;
-            }
-            charidx--;
-        }
-        return true;
+    private String stripChars;
+    private String affix;
+    private String condition;
+
+    public AffixRule(String stripChars, String affix, String condition) {
+        this.stripChars = stripChars;
+        this.affix = affix;
+        this.condition = condition;
+    }
+
+    public String getStripChars() {
+        return stripChars;
+    }
+
+    public String getAffix() {
+        return affix;
+    }
+
+    public String getCondition() {
+        return condition;
     }
 }

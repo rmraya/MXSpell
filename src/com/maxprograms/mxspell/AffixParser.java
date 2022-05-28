@@ -6,10 +6,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public class AffixParser {
@@ -17,19 +19,19 @@ public class AffixParser {
     public static final int SETSIZE = 2048; // 1024
     public static final int MAXLNLEN = SETSIZE;
 
-    Map<String, List<Prefix>> prefixMap;
-    Map<String, List<Suffix>> suffixMap;
+    Map<String, Affix> prefixMap;
+    Map<String, Affix> suffixMap;
 
     char[] tryCharacter;
-    int[] mbr = new int[MAXLNLEN];
     private String filename;
 
     private String line;
     private int lineNr;
-    private StringTokenizer tokenizer;
+
     String compoundFlag;
     int compoundMinimalChars = -1;
-    Map<String, String> replacement;
+    List<String[]> replacement;
+    private int replacementSize;
 
     AffixParser(File file, Charset encoding) throws IOException {
         this.filename = file.getName();
@@ -43,36 +45,21 @@ public class AffixParser {
         }
     }
 
-    Map<String, List<Prefix>> getPrefixMap() {
+    Map<String, Affix> getPrefixMap() {
         return prefixMap;
     }
 
-    public Map<String, List<Suffix>> getSuffixMap() {
+    public Map<String, Affix> getSuffixMap() {
         return suffixMap;
     }
 
-    String parseSingleValueLine(String tagname) throws IOException {
-        if (!tokenizer.hasMoreTokens()) {
-            MessageFormat mf = new MessageFormat("{0}:{1} : missing {2} information: {3}");
-            Object[] args = { filename, "" + lineNr, tagname, line };
-            throw new IOException(mf.format(args));
-        }
-        String result = tokenizer.nextToken();
-        if (tokenizer.hasMoreTokens()) {
-            MessageFormat mf = new MessageFormat("{0}:{1} : extra token: {2}");
-            Object[] args = { filename, "" + lineNr, line };
-            throw new IOException(mf.format(args));
-        }
-        return result;
-    }
-
     void parseAffixFile(BufferedReader bufferedReader) throws IOException {
-        while ((line = bufferedReader.readLine())!= null) {
+        while ((line = bufferedReader.readLine()) != null) {
             lineNr++;
             if (line.isBlank()) {
                 continue;
             }
-            tokenizer = new StringTokenizer(line.trim());
+            StringTokenizer tokenizer = new StringTokenizer(line.trim());
             if (tokenizer.hasMoreTokens()) {
                 String tag = tokenizer.nextToken();
                 switch (tag) {
@@ -85,7 +72,7 @@ public class AffixParser {
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        tryCharacter = parseSingleValueLine("TRY").toCharArray();
+                        tryCharacter = tokenizer.nextToken().toCharArray();
                         break;
                     case "SET":
                         // ignore, encoding detected before reaching here
@@ -96,7 +83,7 @@ public class AffixParser {
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        compoundFlag = parseSingleValueLine("COMPOUNDFLAG");
+                        compoundFlag = tokenizer.nextToken();
                         break;
                     case "COMPOUNDMIN":
                         if (compoundMinimalChars >= 0) {
@@ -105,69 +92,19 @@ public class AffixParser {
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        compoundMinimalChars = Integer.parseInt(parseSingleValueLine("COMPOUNDMIN"));
+                        compoundMinimalChars = Integer.parseInt(tokenizer.nextToken());
                         if (compoundMinimalChars < 1 || compoundMinimalChars > 50) {
                             compoundMinimalChars = 3;
                         }
                         break;
                     case "REP":
-                        if (replacement != null) {
-                            MessageFormat mf = new MessageFormat("{0}:{1} : duplicate REP tables: {2}");
-                            Object[] args = { filename, "" + lineNr, line };
-                            throw new IOException(mf.format(args));
-                        }
-                        int replacementCount = Integer.parseInt(parseSingleValueLine("REP"));
-                        if (replacementCount < 1) {
-                            MessageFormat mf = new MessageFormat(
-                                    "{0}:{1} : incorrect number of entries in replacement table: {2}");
-                            Object[] args = { filename, "" + lineNr, line };
-                            throw new IOException(mf.format(args));
-                        }
-                        replacement = new HashMap<>(replacementCount);
-                        for (int j = 0; j < replacementCount; j++) {
-                            line = bufferedReader.readLine();
-                            lineNr++;
-                            if (line == null) {
-                                MessageFormat mf = new MessageFormat(
-                                        "{0}:{1} : unexpected end of file while reading replacement table: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            tokenizer = new StringTokenizer(line.trim());
-                            if (tokenizer.hasMoreTokens()) {
-                                if (!tokenizer.nextToken().equals("REP")) {
-                                    MessageFormat mf = new MessageFormat(
-                                            "{0}:{1} : replacement table is corrupt: {2}");
-                                    Object[] args = { filename, "" + lineNr, line };
-                                    throw new IOException(mf.format(args));
-                                }
-                                if (tokenizer.hasMoreTokens()) {
-                                    String pattern = tokenizer.nextToken();
-                                    if (tokenizer.hasMoreTokens()) {
-                                        replacement.put(pattern, tokenizer.nextToken());
-                                        // Ignore extra tokens. there are comments and
-                                        // samples in hu_HU
-                                        /*
-                                         * if (tok.hasMoreTokens()) {
-                                         * throw new IOException(filename + ':' + lineNr + ": extra token: "
-                                         * + line);
-                                         * }
-                                         */
-                                    }
-                                }
-                            } else {
-                                MessageFormat mf = new MessageFormat(
-                                        "{0}:{1} : missing pattern/replacement: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                        }
+                        handleReplacement(line);
                         break;
                     case "SFX":
-                        parseAffix(bufferedReader, "SFX", suffixMap);
+                        handleSuffix(line);
                         break;
                     case "PFX":
-                        parseAffix(bufferedReader, "PFX", prefixMap);
+                        handlePrefix(line);
                         break;
                     case "MAP":
                         // TODO handle MAP
@@ -209,188 +146,99 @@ public class AffixParser {
                 }
             }
         }
-    }
-
-    private void parseAffix(BufferedReader bufferedReader, String tagname, Map map) throws IOException {
-        if (!tokenizer.hasMoreTokens()) {
-            MessageFormat mf = new MessageFormat("{0}:{1} : missing {2} information: {3}");
-            Object[] args = { filename, "" + lineNr, tagname, line };
+        if (replacementSize != replacement.size()) {
+            MessageFormat mf = new MessageFormat("Replacement table size is {0}, expected size:{1}");
+            Object[] args = { "" + replacement.size(), "" + replacementSize };
             throw new IOException(mf.format(args));
         }
-        String affixChar = tokenizer.nextToken();
-        if (affixChar.length() > 1) {
-            MessageFormat mf = new MessageFormat("{0}:{1} : affix char too long: {2}");
-            Object[] args = { filename, "" + lineNr, line };
-            throw new IOException(mf.format(args));
-        }
-        String compoundString = tokenizer.nextToken();
-        if (compoundString.length() > 1 || compoundString.charAt(0) != 'Y' && compoundString.charAt(0) != 'N') {
-            MessageFormat mf = new MessageFormat("{0}:{1} : unknown compound indicator ''{2}'' in: {3}");
-            Object[] args = { filename, "" + lineNr, compoundString, line };
-            throw new IOException(mf.format(args));
-        }
-        // if (piece.charAt(0) == 'Y')
-        // ff = XPRODUCT;
-        boolean compoundflag = compoundString.charAt(0) == 'Y';
-        int entryCount = Integer.parseInt(tokenizer.nextToken());
-        // Ignore extra tokens. They are present at least on es_ES
-        /*
-         * if (tok.hasMoreTokens()) { throw new IOException(filename +
-         * ':' + lineNr + ": extra token: " + line); }
-         */
-        for (int i = 0; i < entryCount; i++) {
-            line = bufferedReader.readLine();
-            lineNr++;
-            if (line == null) {
-                MessageFormat mf = new MessageFormat("{0}:{1} : unexpected end of file while reading {2}: {3}");
-                Object[] args = { filename, "" + lineNr, tagname, line };
+        Set<String> keySet = prefixMap.keySet();
+        Iterator<String> it = keySet.iterator();
+        while (it.hasNext()) {
+            String key = it.next();
+            Affix affix = prefixMap.get(key);
+            if (!affix.hasAllRules()) {
+                MessageFormat mf = new MessageFormat("{0} Incorrect rules number in prefix {0}");
+                Object[] args = { filename, key };
                 throw new IOException(mf.format(args));
             }
-            tokenizer = new StringTokenizer(line.trim());
+        }
+        keySet = suffixMap.keySet();
+        it = keySet.iterator();
+        while (it.hasNext()) {
+            String key = it.next();
+            Affix affix = suffixMap.get(key);
+            if (!affix.hasAllRules()) {
+                MessageFormat mf = new MessageFormat("{0} Incorrect rules number in suffix {0}");
+                Object[] args = { filename, key };
+                throw new IOException(mf.format(args));
+            }
+        }
+    }
+
+    private void handleReplacement(String line) throws NumberFormatException {
+        StringTokenizer tokenizer = new StringTokenizer(line.substring("REP".length()));
+        if (replacement == null) {
+            replacementSize = Integer.parseInt(tokenizer.nextToken());
+            replacement = new ArrayList<>();
+        } else {
+            String first = tokenizer.nextToken();
+            String second = tokenizer.nextToken();
+            replacement.add(new String[] { first, second });
+        }
+    }
+
+    private void handlePrefix(String line) throws IOException {
+        StringTokenizer tokenizer = new StringTokenizer(line.substring(Affix.PFX.length()));
+        String flag = tokenizer.nextToken();
+        if (prefixMap.containsKey(flag)) {
+            String stripChars = tokenizer.nextToken();
+            String affix = tokenizer.nextToken();
+            String condition = "";
             if (tokenizer.hasMoreTokens()) {
-                if (!tokenizer.nextToken().equals(tagname)) {
-                    MessageFormat mf = new MessageFormat("{0}:{1} : entry is corrupt, expected ''{2}'': {3}");
-                    Object[] args = { filename, "" + lineNr, tagname, line };
-                    throw new IOException(mf.format(args));
-                }
-                String localAffixChar = tokenizer.nextToken();
-                if (!localAffixChar.equals(affixChar)) {
-                    MessageFormat mf = new MessageFormat("{0}:{1} : entry is corrupt,expected ''{2}'': {3}");
-                    Object[] args = { filename, "" + lineNr, affixChar, line };
-                    throw new IOException(mf.format(args));
-                }
-                Affix a;
-                if (map == suffixMap) {
-                    a = new Suffix();
-                } else {
-                    a = new Prefix();
-                }
-                a.affix = affixChar.charAt(0);
-                a.compoundFlag = compoundflag;
-                // 3 - is string to strip or 0 for null
-                a.strip = tokenizer.nextToken();
-                String append = tokenizer.nextToken();
-                if (a.strip.equals("0")) {
-                    a.strip = "";
-                }
-                Map it = map;
-                if (!append.equals("0")) {
-                    if (map == suffixMap) {
-                        append = new StringBuffer(append).reverse().toString();
-                    }
-                    int j = 0;
-                    Map next = (Map) it.get(append.substring(j, j + 1));
-                    j++;
-                    while (next != null && j < append.length()) {
-                        it = next;
-                        next = (Map) it.get(append.substring(j, j + 1));
-                        j++;
-                    }
-                    if (next == null) {
-                        j--;
-                        while (j < append.length()) {
-                            Map temp = new HashMap();
-                            it.put(append.substring(j, j + 1), temp);
-                            it = temp;
-                            j++;
-                        }
-                    } else {
-                        it = next;
-                    }
-                }
-                List l = (List) it.get("");
-                if (l == null) {
-                    l = new LinkedList();
-                    it.put("", l);
-                }
-                l.add(a);
-                if (tokenizer.hasMoreTokens()) {
-                    String condition = tokenizer.nextToken();
-                    encodeit(a, condition);
-                } else {
-                    // some entries are broken in ru_RU
-                    encodeit(a, "");
-                }
-                // Ignore extra tokens. They are present as example
-                // in hu_HU
-                /*
-                 * if (tok.hasMoreTokens()) { throw new
-                 * IOException(filename + ':' + lineNr + ": extra token: " +
-                 * line); }
-                 */
-            }
-        }
-    }
-
-    private void encodeit(Affix ptr, String cs) {
-
-        // now parse the string to create the conds array */
-        int nc = cs.length();
-
-        // if no condition just return
-        if (cs.equals(".")) {
-            ptr.condition = null;
-            return;
-        }
-
-        ptr.condition = new int[SETSIZE];
-        // now clear the conditions array */
-        for (int i = 0; i < SETSIZE; i++) {
-            ptr.condition[i] = 0;
-        }
-
-        int n = 0; // number of conditions
-        int i = 0;
-        while (i < nc) {
-            char c = cs.charAt(i);
-            if (c == '[') {
-                // start group
-                i++;
-                c = cs.charAt(i);
-                boolean neg = false;
-                if (c == '^') {
-                    // negated
-                    neg = true;
-                    i++;
-                    c = cs.charAt(i);
-                }
-                int nm = 0;
-                while (c != ']' && i < cs.length() - 1) {
-                    mbr[nm] = c;
-                    nm++;
-                    i++;
-                    c = cs.charAt(i);
-                }
-                if (neg) {
-                    // complement so set all of them and then unset indicated ones
-                    for (int j = 0; j < SETSIZE; j++) {
-                        ptr.condition[j] = ptr.condition[j] | 1 << n;
-                    }
-                    for (int j = 0; j < nm; j++) {
-                        int k = mbr[j];
-                        ptr.condition[k] = ptr.condition[k] & ~(1 << n);
-                    }
-                } else {
-                    for (int j = 0; j < nm; j++) {
-                        int k = mbr[j];
-                        ptr.condition[k] = ptr.condition[k] | 1 << n;
-                    }
-                }
+                condition = tokenizer.nextToken();
             } else {
-                // not a group
-                if (c == '.') {
-                    // wild card character so set them all
-                    for (int j = 0; j < SETSIZE; j++) {
-                        ptr.condition[j] = ptr.condition[j] | 1 << n;
-                    }
+                if (".".equals(affix)) {
+                    affix = "";
+                    condition = ".";
                 } else {
-                    // just set the proper bit for this char
-                    ptr.condition[c] = ptr.condition[c] | 1 << n;
+                    MessageFormat mf = new MessageFormat("{0}:{1} Unupported prefix: {2}");
+                    Object[] args = { filename, "" + lineNr, line };
+                    throw new IOException(mf.format(args));
                 }
             }
-            n++;
-            i++;
+            prefixMap.get(flag).addRule(new AffixRule(stripChars, affix, condition));
+        } else {
+            String crossProduct = tokenizer.nextToken();
+            String count = tokenizer.nextToken();
+            prefixMap.put(flag, new Affix(Affix.PFX, flag, crossProduct, count));
         }
-        ptr.numconds = n;
     }
+
+    private void handleSuffix(String line) throws IOException {
+        StringTokenizer tokenizer = new StringTokenizer(line.substring(Affix.SFX.length()));
+        String flag = tokenizer.nextToken();
+        if (suffixMap.containsKey(flag)) {
+            String stripChars = tokenizer.nextToken();
+            String affix = tokenizer.nextToken();
+            String condition = "";
+            if (tokenizer.hasMoreTokens()) {
+                condition = tokenizer.nextToken();
+            } else {
+                if (".".equals(affix)) {
+                    affix = "";
+                    condition = ".";
+                } else {
+                    MessageFormat mf = new MessageFormat("{0}:{1} Unupported suffix: {2}");
+                    Object[] args = { filename, "" + lineNr, line };
+                    throw new IOException(mf.format(args));
+                }
+            }
+            suffixMap.get(flag).addRule(new AffixRule(stripChars, affix, condition));
+        } else {
+            String crossProduct = tokenizer.nextToken();
+            String count = tokenizer.nextToken();
+            suffixMap.put(flag, new Affix(Affix.SFX, flag, crossProduct, count));
+        }
+    }
+
 }

@@ -12,15 +12,15 @@ package com.maxprograms.mxspell;
 public class DictionaryEntry implements Comparable<DictionaryEntry> {
 
     private String word;
-    private String affix;
+    private String flags;
 
-    public DictionaryEntry(String word, String affix) {
+    public DictionaryEntry(String word, String flags) {
         this.word = word;
-        this.affix = affix;
+        this.flags = flags;
     }
 
-    public String getAffix() {
-        return affix;
+    public String getFlags() {
+        return flags;
     }
 
     public String getWord() {
@@ -30,17 +30,17 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DictionaryEntry entry) {
-            if (affix != null) {
-                return word.equals(entry.word) && affix.equals(entry.affix);
+            if (flags != null) {
+                return word.equals(entry.word) && flags.equals(entry.flags);
             }
-            return word.equals(entry.word) && entry.affix == null;
+            return word.equals(entry.word) && entry.flags == null;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return affix != null ? (word + affix).hashCode() : word.hashCode();
+        return flags != null ? (word + flags).hashCode() : word.hashCode();
     }
 
     @Override
@@ -50,10 +50,10 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
             if (i != 0) {
                 return i;
             }
-            if (affix != null && o.affix != null) {
-                return affix.compareTo(o.affix);
+            if (flags != null && o.flags != null) {
+                return flags.compareTo(o.flags);
             }
-            return affix != null ? -1 : 1;
+            return flags != null ? -1 : 1;
         }
         return 0;
     }

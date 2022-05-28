@@ -41,9 +41,14 @@ public class EncodingResolver {
                 }
             }
         }
-        if (charset == null) {
+        if (!declared.isEmpty() && charset == null) {
             MessageFormat mf = new MessageFormat("Unsupported dictionary encoding: {0}");
             Object[] args = { declared };
+            throw new IOException(mf.format(args));
+        }
+        if (charset == null) {
+            MessageFormat mf = new MessageFormat("SET option not declared in {0}");
+            Object[] args = { filename };
             throw new IOException(mf.format(args));
         }
         return charset;
