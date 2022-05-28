@@ -67,9 +67,11 @@ public class AffixParser {
     }
 
     void parseAffixFile(BufferedReader bufferedReader) throws IOException {
-        line = bufferedReader.readLine();
-        while (line != null) {
+        while ((line = bufferedReader.readLine())!= null) {
             lineNr++;
+            if (line.isBlank()) {
+                continue;
+            }
             tokenizer = new StringTokenizer(line.trim());
             if (tokenizer.hasMoreTokens()) {
                 String tag = tokenizer.nextToken();
@@ -206,7 +208,6 @@ public class AffixParser {
                         throw new IOException(mf.format(args));
                 }
             }
-            line = bufferedReader.readLine();
         }
     }
 
