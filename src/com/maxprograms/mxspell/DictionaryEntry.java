@@ -9,7 +9,7 @@
 *******************************************************************************/
 package com.maxprograms.mxspell;
 
-public class DictionaryEntry {
+public class DictionaryEntry implements Comparable<DictionaryEntry> {
 
     private String word;
     private String affix;
@@ -30,14 +30,32 @@ public class DictionaryEntry {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DictionaryEntry entry) {
-            return word.equals(entry.word) && affix.equals(entry.affix);
+            if (affix != null) {
+                return word.equals(entry.word) && affix.equals(entry.affix);
+            }
+            return word.equals(entry.word) && entry.affix == null;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (word + affix).hashCode();
+        return affix != null ? (word + affix).hashCode() : word.hashCode();
+    }
+
+    @Override
+    public int compareTo(DictionaryEntry o) {
+        if (!this.equals(o)) {
+            int i = word.compareTo(o.word);
+            if (i != 0) {
+                return i;
+            }
+            if (affix != null && o.affix != null) {
+                return affix.compareTo(o.affix);
+            }
+            return affix != null ? -1 : 1;
+        }
+        return 0;
     }
 
 }

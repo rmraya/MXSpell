@@ -20,7 +20,7 @@ import java.lang.System.Logger.Level;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.text.MessageFormat;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -31,10 +31,10 @@ public class Dictionary {
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
     public static void main(String[] args) throws IOException {
-        new Dictionary("dictionaries//ru_RU.zip");
+        new Dictionary("dictionaries//es_UY.zip");
     }
 
-    private Map<String, DictionaryEntry> wordsMap;
+    private List<DictionaryEntry> wordsList;
     private Map<String, List<Prefix>> prefixMap;
     private Map<String, List<Suffix>> suffixMap;
 
@@ -105,7 +105,7 @@ public class Dictionary {
     }
 
     private void loadWords(File words, Charset encoding) throws IOException {
-        wordsMap = new HashMap<>();
+        wordsList = new ArrayList<>();
         try (FileReader reader = new FileReader(words, encoding)) {
             try (BufferedReader buffered = new BufferedReader(reader)) {
                 int entries = 0;
@@ -122,14 +122,14 @@ public class Dictionary {
                     if (index > 0) {
                         String word = line.substring(0, index);
                         String affix = line.substring(index + 1);
-                        wordsMap.put(word, new DictionaryEntry(word, affix));
+                        wordsList.add(new DictionaryEntry(word, affix));
                     } else {
-                        wordsMap.put(line, new DictionaryEntry(line, null));
+                        wordsList.add(new DictionaryEntry(line, null));
                     }
                 }
-                if (entries != wordsMap.size()) {
+                if (entries != wordsList.size()) {
                     MessageFormat mf = new MessageFormat("Expected entries: {0}, entries read: {1}");
-                    Object[] args = { "" + entries, "" + wordsMap.size() };
+                    Object[] args = { "" + entries, "" + wordsList.size() };
                     logger.log(Level.WARNING, mf.format(args));
                 }
             }
