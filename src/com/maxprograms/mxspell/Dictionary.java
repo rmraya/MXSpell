@@ -17,8 +17,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -28,31 +31,36 @@ public class Dictionary {
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
     public static void main(String[] args) throws IOException {
-        new Dictionary("dictionaries\\es_UY.zip");
+        new Dictionary("dictionaries//ru_RU.zip");
     }
 
     private Map<String, DictionaryEntry> wordsMap;
+    private Map<String, List<Prefix>> prefixMap;
+    private Map<String, List<Suffix>> suffixMap;
 
     public Dictionary(String zipFile) throws IOException {
         File zip = new File(zipFile);
         if (!zip.exists()) {
-            throw new IOException("Zip file does not exist");
+            MessageFormat mf = new MessageFormat("Zip file {0} does not exist");
+            Object[] args = { zipFile };
+            throw new IOException(mf.format(args));
         }
         String wordsFile = "";
         String affixFile = "";
-        try (ZipInputStream in = new ZipInputStream(new FileInputStream(zip))) {
+        try (ZipInputStream input = new ZipInputStream(new FileInputStream(zip))) {
             ZipEntry entry = null;
-            while ((entry = in.getNextEntry()) != null) {
+            while ((entry = input.getNextEntry()) != null) {
                 String name = entry.getName();
                 if (name.endsWith(".dic") || name.endsWith(".aff")) {
                     File tmp = new File(zip.getParentFile(), name);
                     if (tmp.exists()) {
+                        // remove previous version
                         Files.delete(tmp.toPath());
                     }
                     try (FileOutputStream output = new FileOutputStream(tmp.getAbsolutePath())) {
                         byte[] buf = new byte[2048];
                         int len;
-                        while ((len = in.read(buf)) > 0) {
+                        while ((len = input.read(buf)) > 0) {
                             output.write(buf, 0, len);
                         }
                     }
@@ -66,10 +74,14 @@ public class Dictionary {
             }
         }
         if (wordsFile.isEmpty()) {
-            throw new IOException(".dic file is missing");
+            MessageFormat mf = new MessageFormat("Words file is missing in {0}");
+            Object[] args = { zipFile };
+            throw new IOException(mf.format(args));
         }
         if (affixFile.isEmpty()) {
-            throw new IOException(".aff file is missing");
+            MessageFormat mf = new MessageFormat("Affix file is missing in {0}");
+            Object[] args = { zipFile };
+            throw new IOException(mf.format(args));
         }
         new Dictionary(wordsFile, affixFile);
     }
@@ -77,26 +89,33 @@ public class Dictionary {
     public Dictionary(String wordsFile, String affixFile) throws IOException {
         File words = new File(wordsFile);
         if (!words.exists()) {
-            throw new IOException(".dic file is missing");
+            MessageFormat mf = new MessageFormat("Words file {0} does not exist");
+            Object[] args = { wordsFile };
+            throw new IOException(mf.format(args));
         }
         File affixes = new File(affixFile);
         if (!affixes.exists()) {
-            throw new IOException(".aff file is missing");
+            MessageFormat mf = new MessageFormat("Affix file {0} does not exist");
+            Object[] args = { affixFile };
+            throw new IOException(mf.format(args));
         }
-        loadWords(words);
-        loadAffixes(affixes);
+        Charset encoding = EncodingResolver.getEncoding(affixes);
+        loadWords(words, encoding);
+        loadAffixes(affixes, encoding);
     }
 
-    private void loadWords(File words) throws IOException {
+    private void loadWords(File words, Charset encoding) throws IOException {
         wordsMap = new HashMap<>();
-        try (FileReader reader = new FileReader(words)) {
+        try (FileReader reader = new FileReader(words, encoding)) {
             try (BufferedReader buffered = new BufferedReader(reader)) {
                 int entries = 0;
                 String line = buffered.readLine();
                 try {
                     entries = Integer.parseInt(line);
                 } catch (NumberFormatException nfe) {
-                    throw new IOException("Missing word count in .dic file");
+                    MessageFormat mf = new MessageFormat("Missing words count in file {0}");
+                    Object[] args = { words.getAbsoluteFile() };
+                    throw new IOException(mf.format(args));
                 }
                 while ((line = buffered.readLine()) != null) {
                     int index = line.indexOf("/");
@@ -109,12 +128,17 @@ public class Dictionary {
                     }
                 }
                 if (entries != wordsMap.size()) {
-                    logger.log(Level.WARNING, "Expected entries: " + entries + ", entries read: " + wordsMap.size());
+                    MessageFormat mf = new MessageFormat("Expected entries: {0}, entries read: {1}");
+                    Object[] args = { "" + entries, "" + wordsMap.size() };
+                    logger.log(Level.WARNING, mf.format(args));
                 }
             }
         }
     }
 
-    private void loadAffixes(File affixes) {
+    private void loadAffixes(File affixes, Charset encoding) throws IOException {
+        AffixParser parser = new AffixParser(affixes, encoding);
+        suffixMap = parser.getSuffixMap();
+        prefixMap = parser.getPrefixMap();
     }
 }

@@ -1,26 +1,24 @@
 package com.maxprograms.mxspell;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.TreeMap;
 
 public class AffixParser {
 
     public static final int SETSIZE = 2048; // 1024
     public static final int MAXLNLEN = SETSIZE;
 
-    Map<String, List<Prefix>> prefix;
-    Map<String, List<Suffix>> suffix;
+    Map<String, List<Prefix>> prefixMap;
+    Map<String, List<Suffix>> suffixMap;
 
     char[] tryCharacter;
     int[] mbr = new int[MAXLNLEN];
@@ -29,70 +27,28 @@ public class AffixParser {
     private String line;
     private int lineNr;
     private StringTokenizer tokenizer;
-    String encoding;
     String compoundFlag;
     int compoundMinimalChars = -1;
     Map<String, String> replacement;
 
-    private static final int TAG_TRY = 1;
-    private static final int TAG_SET = 2;
-    private static final int TAG_COMPOUNDFLAG = 3;
-    private static final int TAG_COMPOUNDMIN = 4;
-    private static final int TAG_REP = 5;
-    private static final int TAG_PFX = 6;
-    private static final int TAG_SFX = 7;
+    AffixParser(File file, Charset encoding) throws IOException {
+        this.filename = file.getName();
+        suffixMap = new HashMap<>();
+        prefixMap = new HashMap<>();
 
-    AffixParser(String filename) throws Exception {
-        this.filename = filename;
-        String originalEncoding = "";
-        try (FileReader reader = new FileReader(filename)) {
+        try (FileReader reader = new FileReader(file, encoding)) {
             try (BufferedReader bufferedReader = new BufferedReader(reader)) {
-                while ((line = bufferedReader.readLine()) != null) {
-                    if (line.trim().startsWith("SET ")) {
-                        originalEncoding = checkEncoding(line.trim().substring(4).trim());
-                        break;
-                    }
-                }
-                if (originalEncoding == null) {
-                    MessageFormat mf = new MessageFormat("Unsupported dictionary encoding: {0}");
-                    Object[] args = { line.trim().substring(4).trim() };
-                    throw new Exception(mf.format(args));
-                }
                 parseAffixFile(bufferedReader);
             }
         }
     }
 
-    private String checkEncoding(String string) {
-        Map<String, Charset> charsets = new TreeMap<>(Charset.availableCharsets());
-        Set<String> keys = charsets.keySet();
-        String[] codes = new String[keys.size()];
-        Iterator<String> i = keys.iterator();
-        int j = 0;
-        while (i.hasNext()) {
-            Charset cset = charsets.get(i.next());
-            if (cset.displayName().equalsIgnoreCase(string)) {
-                return cset.displayName();
-            }
-            codes[j++] = cset.displayName();
-        }
-        if (string.matches(".*\\d\\d\\d.*")) {
-            // microsoft or ISO based codepage
-            StringBuffer builder = new StringBuffer();
-            for (j = 0; !Character.isDigit(string.charAt(j)); j++) {
-                // skip non-numeric characteres
-            }
-            for (; j < string.length(); j++) {
-                builder.append(string.charAt(j));
-            }
-            string = builder.toString();
-            for (j = 0; j < codes.length; j++) {
-                if (codes[j].indexOf(string) != -1) {
-                    return codes[j];
-                }
-            }
-        }
-        return null;
+    Map<String, List<Prefix>> getPrefixMap() {
+        return prefixMap;
+    }
+
+    public Map<String, List<Suffix>> getSuffixMap() {
+        return suffixMap;
     }
 
     String parseSingleValueLine(String tagname) throws IOException {
@@ -110,137 +66,150 @@ public class AffixParser {
         return result;
     }
 
-    void parseAffixFile(BufferedReader bufferedReader) throws IOException, IOException {
-        suffix = new HashMap<>();
-        prefix = new HashMap<>();
-        Map<String, Integer> tagmap = new HashMap<>();
-        tagmap.put("TRY", TAG_TRY);
-        tagmap.put("SET", TAG_SET);
-        tagmap.put("COMPOUNDFLAG", TAG_COMPOUNDFLAG);
-        tagmap.put("COMPOUNDMIN", TAG_COMPOUNDMIN);
-        tagmap.put("REP", TAG_REP);
-        tagmap.put("PFX", TAG_PFX);
-        tagmap.put("SFX", TAG_SFX);
+    void parseAffixFile(BufferedReader bufferedReader) throws IOException {
         line = bufferedReader.readLine();
         while (line != null) {
             lineNr++;
             tokenizer = new StringTokenizer(line.trim());
             if (tokenizer.hasMoreTokens()) {
-                Integer tag = tagmap.get(tokenizer.nextToken());
-                if (tag != null) {
-                    switch (tag.intValue()) {
-                        case TAG_TRY:
-                            if (tryCharacter != null) {
-                                MessageFormat mf = new MessageFormat("{0}:{1} : duplicate TRY strings: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            tryCharacter = parseSingleValueLine("TRY").toCharArray();
-                            break;
-                        case TAG_SET:
-                            if (encoding != null) {
-                                MessageFormat mf = new MessageFormat("{0}:{1} : duplicate SET strings: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            encoding = checkEncoding(parseSingleValueLine("SET"));
-                            break;
-                        case TAG_COMPOUNDFLAG:
-                            if (compoundFlag != null) {
-                                MessageFormat mf = new MessageFormat("{0}:{1} : duplicate compound flags: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            compoundFlag = parseSingleValueLine("COMPOUNDFLAG");
-                            break;
-                        case TAG_COMPOUNDMIN:
-                            if (compoundMinimalChars >= 0) {
-                                MessageFormat mf = new MessageFormat(
-                                        "{0}:{1} : duplicate compound minimal char settings: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            compoundMinimalChars = Integer.parseInt(parseSingleValueLine("COMPOUNDMIN"));
-                            if (compoundMinimalChars < 1 || compoundMinimalChars > 50) {
-                                compoundMinimalChars = 3;
-                            }
-                            break;
-                        case TAG_REP:
-                            if (replacement != null) {
-                                MessageFormat mf = new MessageFormat("{0}:{1} : duplicate REP tables: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            int replacementCount = Integer.parseInt(parseSingleValueLine("REP"));
-                            if (replacementCount < 1) {
-                                MessageFormat mf = new MessageFormat(
-                                        "{0}:{1} : incorrect number of entries in replacement table: {2}");
-                                Object[] args = { filename, "" + lineNr, line };
-                                throw new IOException(mf.format(args));
-                            }
-                            replacement = new HashMap<>(replacementCount);
-                            for (int j = 0; j < replacementCount; j++) {
-                                line = bufferedReader.readLine();
-                                lineNr++;
-                                if (line == null) {
-                                    MessageFormat mf = new MessageFormat(
-                                            "{0}:{1} : unexpected end of file while reading replacement table: {2}");
-                                    Object[] args = { filename, "" + lineNr, line };
-                                    throw new IOException(mf.format(args));
-                                }
-                                tokenizer = new StringTokenizer(line.trim());
-                                if (tokenizer.hasMoreTokens()) {
-                                    if (!tokenizer.nextToken().equals("REP")) {
-                                        MessageFormat mf = new MessageFormat(
-                                                "{0}:{1} : replacement table is corrupt: {2}");
-                                        Object[] args = { filename, "" + lineNr, line };
-                                        throw new IOException(mf.format(args));
-                                    }
-                                    if (tokenizer.hasMoreTokens()) {
-                                        String pattern = tokenizer.nextToken();
-                                        if (tokenizer.hasMoreTokens()) {
-                                            replacement.put(pattern, tokenizer.nextToken());
-                                            // Ignore extra tokens. there are comments and
-                                            // samples in hu_HU
-                                            /*
-                                             * if (tok.hasMoreTokens()) {
-                                             * throw new IOException(filename + ':' + lineNr + ": extra token: "
-                                             * + line);
-                                             * }
-                                             */
-                                        }
-                                    }
-                                } else {
-                                    MessageFormat mf = new MessageFormat(
-                                            "{0}:{1} : missing pattern/replacement: {2}");
-                                    Object[] args = { filename, "" + lineNr, line };
-                                    throw new IOException(mf.format(args));
-                                }
-                            }
-                            break;
-                        case TAG_SFX:
-                            parseAffix(bufferedReader, "SFX", suffix);
-                            break;
-                        case TAG_PFX:
-                            parseAffix(bufferedReader, "PFX", prefix);
-                            break;
-                        default:
-                            MessageFormat mf = new MessageFormat("{0}:{1} : unknown tag: {2}");
+                String tag = tokenizer.nextToken();
+                switch (tag) {
+                    case "#":
+                        // comment line, ignore
+                        break;
+                    case "TRY":
+                        if (tryCharacter != null) {
+                            MessageFormat mf = new MessageFormat("{0}:{1} : duplicate TRY strings: {2}");
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
-                    }
-                    // ignore unknown tags
-                    /*
-                     * } else {
-                     * throw new IOException(filename + ':' + lineNr + ": unknown tag: " + line);
-                     */
+                        }
+                        tryCharacter = parseSingleValueLine("TRY").toCharArray();
+                        break;
+                    case "SET":
+                        // ignore, encoding detected before reaching here
+                        break;
+                    case "COMPOUNDFLAG":
+                        if (compoundFlag != null) {
+                            MessageFormat mf = new MessageFormat("{0}:{1} : duplicate compound flags: {2}");
+                            Object[] args = { filename, "" + lineNr, line };
+                            throw new IOException(mf.format(args));
+                        }
+                        compoundFlag = parseSingleValueLine("COMPOUNDFLAG");
+                        break;
+                    case "COMPOUNDMIN":
+                        if (compoundMinimalChars >= 0) {
+                            MessageFormat mf = new MessageFormat(
+                                    "{0}:{1} : duplicate compound minimal char settings: {2}");
+                            Object[] args = { filename, "" + lineNr, line };
+                            throw new IOException(mf.format(args));
+                        }
+                        compoundMinimalChars = Integer.parseInt(parseSingleValueLine("COMPOUNDMIN"));
+                        if (compoundMinimalChars < 1 || compoundMinimalChars > 50) {
+                            compoundMinimalChars = 3;
+                        }
+                        break;
+                    case "REP":
+                        if (replacement != null) {
+                            MessageFormat mf = new MessageFormat("{0}:{1} : duplicate REP tables: {2}");
+                            Object[] args = { filename, "" + lineNr, line };
+                            throw new IOException(mf.format(args));
+                        }
+                        int replacementCount = Integer.parseInt(parseSingleValueLine("REP"));
+                        if (replacementCount < 1) {
+                            MessageFormat mf = new MessageFormat(
+                                    "{0}:{1} : incorrect number of entries in replacement table: {2}");
+                            Object[] args = { filename, "" + lineNr, line };
+                            throw new IOException(mf.format(args));
+                        }
+                        replacement = new HashMap<>(replacementCount);
+                        for (int j = 0; j < replacementCount; j++) {
+                            line = bufferedReader.readLine();
+                            lineNr++;
+                            if (line == null) {
+                                MessageFormat mf = new MessageFormat(
+                                        "{0}:{1} : unexpected end of file while reading replacement table: {2}");
+                                Object[] args = { filename, "" + lineNr, line };
+                                throw new IOException(mf.format(args));
+                            }
+                            tokenizer = new StringTokenizer(line.trim());
+                            if (tokenizer.hasMoreTokens()) {
+                                if (!tokenizer.nextToken().equals("REP")) {
+                                    MessageFormat mf = new MessageFormat(
+                                            "{0}:{1} : replacement table is corrupt: {2}");
+                                    Object[] args = { filename, "" + lineNr, line };
+                                    throw new IOException(mf.format(args));
+                                }
+                                if (tokenizer.hasMoreTokens()) {
+                                    String pattern = tokenizer.nextToken();
+                                    if (tokenizer.hasMoreTokens()) {
+                                        replacement.put(pattern, tokenizer.nextToken());
+                                        // Ignore extra tokens. there are comments and
+                                        // samples in hu_HU
+                                        /*
+                                         * if (tok.hasMoreTokens()) {
+                                         * throw new IOException(filename + ':' + lineNr + ": extra token: "
+                                         * + line);
+                                         * }
+                                         */
+                                    }
+                                }
+                            } else {
+                                MessageFormat mf = new MessageFormat(
+                                        "{0}:{1} : missing pattern/replacement: {2}");
+                                Object[] args = { filename, "" + lineNr, line };
+                                throw new IOException(mf.format(args));
+                            }
+                        }
+                        break;
+                    case "SFX":
+                        parseAffix(bufferedReader, "SFX", suffixMap);
+                        break;
+                    case "PFX":
+                        parseAffix(bufferedReader, "PFX", prefixMap);
+                        break;
+                    case "MAP":
+                        // TODO handle MAP
+                        break;
+                    case "FLAG":
+                        // TODO handle FLAG
+                        break;
+                    case "KEY":
+                        // TODO handle KEY
+                        break;
+                    case "WORDCHARS":
+                        // TODO handle WORDCHARS
+                        break;
+                    case "BREAK":
+                        // TODO handle BREAK
+                        break;
+                    case "FORBIDDENWORD":
+                        // TODO handle FORBIDDENWORD
+                        break;
+                    case "NOSPLITSUGS":
+                        // TODO handle NOSPLITSUGS
+                        break;
+                    case "MAXNGRAMSUGS":
+                        // TODO handle MAXNGRAMSUGS
+                        break;
+                    case "ONLYMAXDIFF":
+                        // TODO handle ONLYMAXDIFF
+                        break;
+                    case "MAXDIFF":
+                        // TODO handle MAXDIFF
+                        break;
+                    case "ICONV":
+                        // TODO handle ICONV
+                        break;
+                    default:
+                        MessageFormat mf = new MessageFormat("{0}:{1} : unknown tag: {2}");
+                        Object[] args = { filename, "" + lineNr, line };
+                        throw new IOException(mf.format(args));
                 }
             }
             line = bufferedReader.readLine();
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void parseAffix(BufferedReader bufferedReader, String tagname, Map map) throws IOException, IOException {
         if (!tokenizer.hasMoreTokens()) {
             MessageFormat mf = new MessageFormat("{0}:{1} : missing {2} information: {3}");
@@ -290,7 +259,7 @@ public class AffixParser {
                     throw new IOException(mf.format(args));
                 }
                 Affix a;
-                if (map == suffix) {
+                if (map == suffixMap) {
                     a = new Suffix();
                 } else {
                     a = new Prefix();
@@ -305,7 +274,7 @@ public class AffixParser {
                 }
                 Map it = map;
                 if (!append.equals("0")) {
-                    if (map == suffix) {
+                    if (map == suffixMap) {
                         append = new StringBuffer(append).reverse().toString();
                     }
                     int j = 0;
@@ -422,9 +391,5 @@ public class AffixParser {
             i++;
         }
         ptr.numconds = n;
-    }
-
-    public String getEncoding() {
-        return encoding;
     }
 }
