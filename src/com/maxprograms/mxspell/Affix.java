@@ -31,6 +31,10 @@ public class Affix {
         rules = new ArrayList<>();
     }
 
+    public String getType() {
+        return type;
+    }
+    
     public void addRule(AffixRule rule) {
         rules.add(rule);
     }

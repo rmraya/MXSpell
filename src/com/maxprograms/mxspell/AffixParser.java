@@ -12,13 +12,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 public class AffixParser {
 
-    Map<String, Affix> prefixMap;
-    Map<String, Affix> suffixMap;
+    Map<String, Affix> affixMap;
 
     private char[] tryCharacter;
     private String filename;
@@ -32,8 +32,7 @@ public class AffixParser {
 
     AffixParser(File file, Charset encoding) throws IOException {
         this.filename = file.getName();
-        suffixMap = new HashMap<>();
-        prefixMap = new HashMap<>();
+        affixMap = new HashMap<>();
 
         try (FileReader reader = new FileReader(file, encoding)) {
             try (BufferedReader bufferedReader = new BufferedReader(reader)) {
@@ -42,12 +41,8 @@ public class AffixParser {
         }
     }
 
-    Map<String, Affix> getPrefixMap() {
-        return prefixMap;
-    }
-
-    public Map<String, Affix> getSuffixMap() {
-        return suffixMap;
+    public Map<String, Affix> getAffixMap() {
+        return affixMap;
     }
 
     void parseAffixFile(BufferedReader bufferedReader) throws IOException {
@@ -99,10 +94,10 @@ public class AffixParser {
                         handleReplacement(line);
                         break;
                     case "SFX":
-                        handleSuffix(line);
+                        handleAffix(Affix.SFX, line);
                         break;
                     case "PFX":
-                        handlePrefix(line);
+                        handleAffix(Affix.PFX, line);
                         break;
                     case "MAP":
                         // TODO handle MAP
@@ -145,28 +140,17 @@ public class AffixParser {
             }
         }
         if (replacementList != null && replacementSize != replacementList.size()) {
-            MessageFormat mf = new MessageFormat("Replacement table size is {0}, expected size:{1}");
-            Object[] args = { "" + replacementList.size(), "" + replacementSize };
+            MessageFormat mf = new MessageFormat("{0} Replacement table size is {0}, expected size:{1}");
+            Object[] args = { filename, "" + replacementList.size(), "" + replacementSize };
             throw new IOException(mf.format(args));
         }
-        Set<String> keySet = prefixMap.keySet();
+        Set<String> keySet = affixMap.keySet();
         Iterator<String> it = keySet.iterator();
         while (it.hasNext()) {
             String key = it.next();
-            Affix affix = prefixMap.get(key);
+            Affix affix = affixMap.get(key);
             if (!affix.hasAllRules()) {
-                MessageFormat mf = new MessageFormat("{0} Incorrect rules number in prefix {0}");
-                Object[] args = { filename, key };
-                throw new IOException(mf.format(args));
-            }
-        }
-        keySet = suffixMap.keySet();
-        it = keySet.iterator();
-        while (it.hasNext()) {
-            String key = it.next();
-            Affix affix = suffixMap.get(key);
-            if (!affix.hasAllRules()) {
-                MessageFormat mf = new MessageFormat("{0} Incorrect rules number in suffix {0}");
+                MessageFormat mf = new MessageFormat("{0} Incorrect rules number in suffix {1}");
                 Object[] args = { filename, key };
                 throw new IOException(mf.format(args));
             }
@@ -196,10 +180,10 @@ public class AffixParser {
         }
     }
 
-    private void handlePrefix(String line) throws IOException {
-        StringTokenizer tokenizer = new StringTokenizer(line.substring(Affix.PFX.length()));
+    private void handleAffix(String type, String line) throws IOException, NoSuchElementException {
+        StringTokenizer tokenizer = new StringTokenizer(line.substring(type.length()));
         String flag = tokenizer.nextToken();
-        if (prefixMap.containsKey(flag)) {
+        if (affixMap.containsKey(flag)) {
             String stripChars = tokenizer.nextToken();
             String affix = tokenizer.nextToken();
             String condition = "";
@@ -210,43 +194,16 @@ public class AffixParser {
                     affix = "";
                     condition = ".";
                 } else {
-                    MessageFormat mf = new MessageFormat("{0}:{1} Unupported prefix: {2}");
+                    MessageFormat mf = new MessageFormat("{0}:{1} Unupported affix: {2}");
                     Object[] args = { filename, "" + lineNr, line };
                     throw new IOException(mf.format(args));
                 }
             }
-            prefixMap.get(flag).addRule(new AffixRule(stripChars, affix, condition));
+            affixMap.get(flag).addRule(new AffixRule(stripChars, affix, condition));
         } else {
             String crossProduct = tokenizer.nextToken();
             String count = tokenizer.nextToken();
-            prefixMap.put(flag, new Affix(Affix.PFX, flag, crossProduct, count));
-        }
-    }
-
-    private void handleSuffix(String line) throws IOException {
-        StringTokenizer tokenizer = new StringTokenizer(line.substring(Affix.SFX.length()));
-        String flag = tokenizer.nextToken();
-        if (suffixMap.containsKey(flag)) {
-            String stripChars = tokenizer.nextToken();
-            String affix = tokenizer.nextToken();
-            String condition = "";
-            if (tokenizer.hasMoreTokens()) {
-                condition = tokenizer.nextToken();
-            } else {
-                if (".".equals(affix)) {
-                    affix = "";
-                    condition = ".";
-                } else {
-                    MessageFormat mf = new MessageFormat("{0}:{1} Unupported suffix: {2}");
-                    Object[] args = { filename, "" + lineNr, line };
-                    throw new IOException(mf.format(args));
-                }
-            }
-            suffixMap.get(flag).addRule(new AffixRule(stripChars, affix, condition));
-        } else {
-            String crossProduct = tokenizer.nextToken();
-            String count = tokenizer.nextToken();
-            suffixMap.put(flag, new Affix(Affix.SFX, flag, crossProduct, count));
+            affixMap.put(flag, new Affix(type, flag, crossProduct, count));
         }
     }
 
@@ -269,6 +226,61 @@ public class AffixParser {
             return affix.split(",");
         }
         return null;
+    }
+
+    public List<String> getWords(String word, String affixString) throws IOException {
+        List<String> result = new ArrayList<>();
+        String[] flags = getFlags(affixString);
+        for (int i = 0; i < flags.length; i++) {
+            String flag = flags[i];
+            Affix affix = affixMap.get(flag);
+            if (affix == null) {
+                MessageFormat mf = new MessageFormat("Unnown affix {0} for word {1}");
+                Object[] args = { flag, word };
+                throw new IOException(mf.format(args));
+            }
+            List<String> processed = processRules(affix.getType(), word, affix.getRules());
+            result.addAll(processed);
+        }
+        return result;
+    }
+
+    private List<String> processRules(String type, String word, List<AffixRule> rules) {
+        List<String> result = new ArrayList<>();
+        Iterator<AffixRule> it = rules.iterator();
+        while (it.hasNext()) {
+            AffixRule rule = it.next();
+            String condition = rule.getCondition();
+            if (matchesCondition(type, word, condition)) {
+                String stripped = word;
+                String stripChars = rule.getStripChars();
+                if (!"0".equals(stripChars)) {
+                    int length = stripChars.length();
+                    if (Affix.PFX.equals(type)) {
+                        stripped = word.substring(length);
+                    } else {
+                        stripped = stripped.substring(0, stripped.length() - length);
+                    }
+                }
+                if (Affix.PFX.equals(type)) {
+                    stripped = rule.getAffix() + stripped;
+                } else {
+                    stripped = stripped + rule.getAffix();
+                }
+                if (!result.contains(stripped)) {
+                    result.add(stripped);
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean matchesCondition(String type, String word, String condition) {
+        if (".".equals(condition)) {
+            return true;
+        }
+        String regex = type.equals(Affix.PFX) ? "^" + condition + ".*" : ".*" + condition + "$";
+        return word.matches(regex);
     }
 
 }
