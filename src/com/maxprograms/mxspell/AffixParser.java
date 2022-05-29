@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -16,21 +17,17 @@ import java.util.StringTokenizer;
 
 public class AffixParser {
 
-    public static final int SETSIZE = 2048; // 1024
-    public static final int MAXLNLEN = SETSIZE;
-
     Map<String, Affix> prefixMap;
     Map<String, Affix> suffixMap;
 
-    char[] tryCharacter;
+    private char[] tryCharacter;
     private String filename;
-
-    private String line;
     private int lineNr;
 
+    private String flagType = "ASCII";
     String compoundFlag;
     int compoundMinimalChars = -1;
-    List<String[]> replacement;
+    private List<String[]> replacementList;
     private int replacementSize;
 
     AffixParser(File file, Charset encoding) throws IOException {
@@ -54,6 +51,7 @@ public class AffixParser {
     }
 
     void parseAffixFile(BufferedReader bufferedReader) throws IOException {
+        String line = "";
         while ((line = bufferedReader.readLine()) != null) {
             lineNr++;
             if (line.isBlank()) {
@@ -110,7 +108,7 @@ public class AffixParser {
                         // TODO handle MAP
                         break;
                     case "FLAG":
-                        // TODO handle FLAG
+                        handleFlag(line);
                         break;
                     case "KEY":
                         // TODO handle KEY
@@ -146,9 +144,9 @@ public class AffixParser {
                 }
             }
         }
-        if (replacementSize != replacement.size()) {
+        if (replacementList != null && replacementSize != replacementList.size()) {
             MessageFormat mf = new MessageFormat("Replacement table size is {0}, expected size:{1}");
-            Object[] args = { "" + replacement.size(), "" + replacementSize };
+            Object[] args = { "" + replacementList.size(), "" + replacementSize };
             throw new IOException(mf.format(args));
         }
         Set<String> keySet = prefixMap.keySet();
@@ -175,15 +173,26 @@ public class AffixParser {
         }
     }
 
+    private void handleFlag(String line) throws IOException {
+        StringTokenizer tokenizer = new StringTokenizer(line.substring("FLAG".length()));
+        flagType = tokenizer.nextToken();
+        List<String> validFlags = Arrays.asList("ASCII", "UTF-8", "num", "long");
+        if (!validFlags.contains(flagType)) {
+            MessageFormat mf = new MessageFormat("{0}:{1} Unupported FLAG type: {2}");
+            Object[] args = { filename, "" + lineNr, flagType };
+            throw new IOException(mf.format(args));
+        }
+    }
+
     private void handleReplacement(String line) throws NumberFormatException {
         StringTokenizer tokenizer = new StringTokenizer(line.substring("REP".length()));
-        if (replacement == null) {
+        if (replacementList == null) {
             replacementSize = Integer.parseInt(tokenizer.nextToken());
-            replacement = new ArrayList<>();
+            replacementList = new ArrayList<>();
         } else {
-            String first = tokenizer.nextToken();
-            String second = tokenizer.nextToken();
-            replacement.add(new String[] { first, second });
+            String what = tokenizer.nextToken();
+            String replace = tokenizer.nextToken();
+            replacementList.add(new String[] { what, replace });
         }
     }
 
@@ -239,6 +248,27 @@ public class AffixParser {
             String count = tokenizer.nextToken();
             suffixMap.put(flag, new Affix(Affix.SFX, flag, crossProduct, count));
         }
+    }
+
+    public String[] getFlags(String affix) {
+        if ("UTF-8".equals(flagType) || "ASCII".equals(flagType)) {
+            String[] flags = new String[affix.length()];
+            for (int i = 0; i < affix.length(); i++) {
+                flags[i] = "" + affix.charAt(i);
+            }
+            return flags;
+        }
+        if ("long".equals(flagType)) {
+            String[] flags = new String[affix.length() / 2];
+            for (int i = 0; i < affix.length(); i += 2) {
+                flags[i] = "" + affix.charAt(i) + affix.charAt(i + 1);
+            }
+            return flags;
+        }
+        if ("num".equals(flagType)) {
+            return affix.split(",");
+        }
+        return null;
     }
 
 }

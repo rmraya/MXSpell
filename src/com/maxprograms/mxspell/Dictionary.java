@@ -31,7 +31,7 @@ public class Dictionary {
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
     public static void main(String[] args) throws IOException {
-        new Dictionary("dictionaries//es_UY.zip");
+        new Dictionary("dictionaries//ru_RU.zip");
     }
 
     private List<DictionaryEntry> wordsList;
@@ -120,8 +120,8 @@ public class Dictionary {
                     int index = line.indexOf("/");
                     if (index > 0) {
                         String word = line.substring(0, index);
-                        String affix = line.substring(index + 1);
-                        wordsList.add(new DictionaryEntry(word, affix));
+                        String affix = line.substring(index + 1);                        
+                        wordsList.add(new DictionaryEntry(word, parser.getFlags(affix)));
                     } else {
                         wordsList.add(new DictionaryEntry(line, null));
                     }

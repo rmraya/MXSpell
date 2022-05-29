@@ -12,14 +12,14 @@ package com.maxprograms.mxspell;
 public class DictionaryEntry implements Comparable<DictionaryEntry> {
 
     private String word;
-    private String flags;
+    private String[] flags;
 
-    public DictionaryEntry(String word, String flags) {
+    public DictionaryEntry(String word, String[] flags) {
         this.word = word;
         this.flags = flags;
     }
 
-    public String getFlags() {
+    public String[] getFlags() {
         return flags;
     }
 
@@ -51,7 +51,7 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
                 return i;
             }
             if (flags != null && o.flags != null) {
-                return flags.compareTo(o.flags);
+                return flags.length > o.flags.length ? -1 : 1;
             }
             return flags != null ? -1 : 1;
         }
