@@ -20,9 +20,8 @@ import java.lang.System.Logger.Level;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -31,10 +30,11 @@ public class Dictionary {
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
     public static void main(String[] args) throws IOException {
-        new Dictionary("dictionaries//es_UY.zip");
+        Dictionary dictionary = new Dictionary("dictionaries//es_UY.zip");
+        System.out.println(dictionary.lookup("vayan"));
     }
 
-    private List<DictionaryEntry> wordsList;
+    private Map<String, DictionaryEntry> wordsMap;
     private AffixParser parser;
 
     public Dictionary(String zipFile) throws IOException {
@@ -81,30 +81,15 @@ public class Dictionary {
             MessageFormat mf = new MessageFormat("Affix file is missing in {0}");
             Object[] args = { zipFile };
             throw new IOException(mf.format(args));
-        }
-        new Dictionary(wordsFile, affixFile);
-    }
-
-    public Dictionary(String wordsFile, String affixFile) throws IOException {
-        File words = new File(wordsFile);
-        if (!words.exists()) {
-            MessageFormat mf = new MessageFormat("Words file {0} does not exist");
-            Object[] args = { wordsFile };
-            throw new IOException(mf.format(args));
-        }
+        }        
         File affixes = new File(affixFile);
-        if (!affixes.exists()) {
-            MessageFormat mf = new MessageFormat("Affix file {0} does not exist");
-            Object[] args = { affixFile };
-            throw new IOException(mf.format(args));
-        }
         Charset encoding = EncodingResolver.getEncoding(affixes);
         parser = new AffixParser(affixes, encoding);
-        loadWords(words, encoding);
+        wordsMap = new TreeMap<>();
+        loadWords(new File(wordsFile), encoding);
     }
 
     private void loadWords(File words, Charset encoding) throws IOException {
-        wordsList = new ArrayList<>();
         try (FileReader reader = new FileReader(words, encoding)) {
             try (BufferedReader buffered = new BufferedReader(reader)) {
                 int entries = 0;
@@ -120,19 +105,23 @@ public class Dictionary {
                     int index = line.indexOf("/");
                     if (index > 0) {
                         String word = line.substring(0, index);
-                        String affix = line.substring(index + 1);                        
-                        wordsList.add(new DictionaryEntry(word, parser.getFlags(affix)));
+                        String affix = line.substring(index + 1);
+                        wordsMap.put(word, new DictionaryEntry(word, parser.getFlags(affix)));
                     } else {
-                        wordsList.add(new DictionaryEntry(line, null));
+                        wordsMap.put(line, new DictionaryEntry(line, null));
                     }
                 }
-                if (entries != wordsList.size()) {
+                if (entries != wordsMap.size()) {
                     MessageFormat mf = new MessageFormat("Expected entries: {0}, entries read: {1}");
-                    Object[] args = { "" + entries, "" + wordsList.size() };
+                    Object[] args = { "" + entries, "" + wordsMap.size() };
                     logger.log(Level.WARNING, mf.format(args));
                 }
             }
         }
-        Collections.sort(wordsList);
     }
+
+    public DictionaryEntry lookup(String word) {
+        return wordsMap.get(word);
+    }
+
 }
