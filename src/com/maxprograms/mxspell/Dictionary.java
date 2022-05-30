@@ -99,7 +99,7 @@ public class Dictionary {
             throw new IOException(mf.format(args));
         }
         Charset encoding = EncodingResolver.getEncoding(affixes);
-        loadAffixes(affixes, encoding);
+        parser = new AffixParser(affixes, encoding);
         loadWords(words, encoding);
     }
 
@@ -121,7 +121,6 @@ public class Dictionary {
                     if (index > 0) {
                         String word = line.substring(0, index);
                         String affix = line.substring(index + 1);                        
-                        List<String> extendedWords = parser.getWords(word, affix);
                         wordsList.add(new DictionaryEntry(word, parser.getFlags(affix)));
                     } else {
                         wordsList.add(new DictionaryEntry(line, null));
@@ -135,9 +134,5 @@ public class Dictionary {
             }
         }
         Collections.sort(wordsList);
-    }
-
-    private void loadAffixes(File affixes, Charset encoding) throws IOException {
-        parser = new AffixParser(affixes, encoding);
     }
 }

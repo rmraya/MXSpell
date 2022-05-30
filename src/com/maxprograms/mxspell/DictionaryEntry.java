@@ -9,6 +9,8 @@
 *******************************************************************************/
 package com.maxprograms.mxspell;
 
+import java.util.Arrays;
+
 public class DictionaryEntry implements Comparable<DictionaryEntry> {
 
     private String word;
@@ -30,10 +32,7 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DictionaryEntry entry) {
-            if (flags != null) {
-                return word.equals(entry.word) && flags.equals(entry.flags);
-            }
-            return word.equals(entry.word) && entry.flags == null;
+            return word.equals(entry.word) && Arrays.equals(flags, entry.flags);
         }
         return false;
     }
@@ -50,10 +49,7 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
             if (i != 0) {
                 return i;
             }
-            if (flags != null && o.flags != null) {
-                return flags.length > o.flags.length ? -1 : 1;
-            }
-            return flags != null ? -1 : 1;
+            return Arrays.compare(flags, o.flags);
         }
         return 0;
     }

@@ -33,8 +33,8 @@ public class EncodingResolver {
             try (BufferedReader bufferedReader = new BufferedReader(reader)) {
                 String line = "";
                 while ((line = bufferedReader.readLine()) != null) {
-                    if (line.trim().startsWith("SET ")) {
-                        declared = line.trim().substring(4).trim();
+                    if (line.stripLeading().startsWith("SET ")) {
+                        declared = line.strip().substring(4).stripLeading();
                         charset = checkEncoding(declared);
                         break;
                     }

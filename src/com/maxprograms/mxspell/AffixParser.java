@@ -18,13 +18,19 @@ import java.util.StringTokenizer;
 
 public class AffixParser {
 
+    // Supported FLAG types
+    private static final String ASCII = "ASCII";
+    private static final String UTF8 = "UTF-8";
+    private static final String NUM = "num";
+    private static final String LONG = "long";
+
     Map<String, Affix> affixMap;
 
     private char[] tryCharacter;
     private String filename;
     private int lineNr;
 
-    private String flagType = "ASCII";
+    private String flagType = ASCII;
     String compoundFlag;
     int compoundMinimalChars = -1;
     private List<String[]> replacementList;
@@ -52,7 +58,7 @@ public class AffixParser {
             if (line.isBlank()) {
                 continue;
             }
-            StringTokenizer tokenizer = new StringTokenizer(line.trim());
+            StringTokenizer tokenizer = new StringTokenizer(line.strip());
             if (tokenizer.hasMoreTokens()) {
                 String tag = tokenizer.nextToken();
                 switch (tag) {
@@ -160,7 +166,7 @@ public class AffixParser {
     private void handleFlag(String line) throws IOException {
         StringTokenizer tokenizer = new StringTokenizer(line.substring("FLAG".length()));
         flagType = tokenizer.nextToken();
-        List<String> validFlags = Arrays.asList("ASCII", "UTF-8", "num", "long");
+        List<String> validFlags = Arrays.asList(ASCII, UTF8, NUM, LONG);
         if (!validFlags.contains(flagType)) {
             MessageFormat mf = new MessageFormat("{0}:{1} Unupported FLAG type: {2}");
             Object[] args = { filename, "" + lineNr, flagType };
@@ -208,24 +214,24 @@ public class AffixParser {
     }
 
     public String[] getFlags(String affix) {
-        if ("UTF-8".equals(flagType) || "ASCII".equals(flagType)) {
+        if (UTF8.equals(flagType) || ASCII.equals(flagType)) {
             String[] flags = new String[affix.length()];
             for (int i = 0; i < affix.length(); i++) {
                 flags[i] = "" + affix.charAt(i);
             }
             return flags;
         }
-        if ("long".equals(flagType)) {
+        if (LONG.equals(flagType)) {
             String[] flags = new String[affix.length() / 2];
             for (int i = 0; i < affix.length(); i += 2) {
                 flags[i] = "" + affix.charAt(i) + affix.charAt(i + 1);
             }
             return flags;
         }
-        if ("num".equals(flagType)) {
+        if (NUM.equals(flagType)) {
             return affix.split(",");
         }
-        return null;
+        return new String[]{};
     }
 
     public List<String> getWords(String word, String affixString) throws IOException {
