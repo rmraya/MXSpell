@@ -55,7 +55,9 @@ public class AffixParser {
         String line = "";
         while ((line = bufferedReader.readLine()) != null) {
             lineNr++;
-            if (line.isBlank()) {
+            line = line.strip();
+            if (line.isBlank() || line.startsWith("#")) {
+                // it's a separator or comment
                 continue;
             }
             StringTokenizer tokenizer = new StringTokenizer(line.strip());
@@ -117,6 +119,9 @@ public class AffixParser {
                     case "WORDCHARS":
                         // TODO handle WORDCHARS
                         break;
+                    case "OCONV":
+                        // TODO handle OCONV
+                        break;
                     case "BREAK":
                         // TODO handle BREAK
                         break;
@@ -137,6 +142,135 @@ public class AffixParser {
                         break;
                     case "ICONV":
                         // TODO handle ICONV
+                        break;
+                    case "FIRST":
+                        // TODO handle FIRST
+                        break;
+                    case "LANG":
+                        // TODO handle LANG
+                        break;
+                    case "NEEDAFFIX":
+                        // TODO handle NEEDAFFIX
+                        break;
+                    case "NOSUGGEST":
+                        // TODO handle NOSUGGEST
+                        break;
+                    case "KEEPCASE":
+                        // TODO handle KEEPCASE
+                        break;
+                    case "COMPOUNDWORDMAX":
+                        // TODO handle COMPOUNDWORDMAX
+                        break;
+                    case "COMPOUNDBEGIN":
+                        // TODO handle COMPOUNDBEGIN
+                        break;
+                    case "COMPOUNDPERMITFLAG":
+                        // TODO handle COMPOUNDPERMITFLAG
+                        break;
+                    case "COMPOUNDMIDDLE":
+                        // TODO handle COMPOUNDMIDDLE
+                        break;
+                    case "COMPOUNDEND":
+                        // TODO handle COMPOUNDEND
+                        break;
+                    case "CHECKCOMPOUNDTRIPLE":
+                        // TODO handle CHECKCOMPOUNDTRIPLE
+                        break;
+                    case "SIMPLIFIEDTRIPLE":
+                        // TODO handle SIMPLIFIEDTRIPLE
+                        break;
+                    case "COMPOUNDRULE":
+                        // TODO handle COMPOUNDRULE
+                        break;
+                    case "COMPOUNDMORESUFFIXES":
+                        // TODO handle COMPOUNDMORESUFFIXES
+                        break;
+                    case "COMPOUNDSYLLABLE":
+                        // TODO handle COMPOUNDSYLLABLE
+                        break;
+                    case "SYLLABLENUM":
+                        // TODO handle SYLLABLENUM
+                        break;
+                    case "ONLYINCOMPOUND":
+                        // TODO handle ONLYINCOMPOUND
+                        break;
+                    case "CHECKCOMPOUNDDUP":
+                        // TODO handle CHECKCOMPOUNDDUP
+                        break;
+                    case "MAXCPDSUGS":
+                        // TODO handle MAXCPDSUGS
+                        break;
+                    case "COMPOUNDROOT":
+                        // TODO handle COMPOUNDROOT
+                        break;
+                    case "HU_KOTOHANGZO":
+                        // TODO handle HU_KOTOHANGZO (only in "hu")
+                        break;
+                    case "GENERATE":
+                        // TODO handle GENERATE (only in "hu")
+                        break;
+                    case "LEMMA_PRESENT":
+                        // TODO handle LEMMA_PRESENT (only in "hu")
+                        break;
+                    case "AF":
+                        // TODO handle AF
+                        break;
+                    case "AM":
+                        // TODO handle AM
+                        break;
+                    case "NAME":
+                        // TODO handle NAME
+                        break;
+                    case "HOME":
+                        // TODO handle HOME
+                        break;
+                    case "VERSION":
+                        // TODO handle VERSION
+                        break;
+                    case "CHECKSHARPS":
+                        // TODO handle CHECKSHARPS
+                        break;
+                    case "CHECKCOMPOUNDREP":
+                        // TODO handle CHECKCOMPOUNDREP
+                        break;
+                    case "COMPOUNDFORBIDFLAG":
+                        // TODO handle COMPOUNDFORBIDFLAG
+                        break;
+                    case "CHECKCOMPOUNDCASE":
+                        // TODO handel CHECKCOMPOUNDCASE
+                        break;
+                    case "CHECKCOMPOUNDPATTERN":
+                        // TODO handle CHECKCOMPOUNDPATTERN
+                        break;
+                    case "COMPOUNDFIRST":
+                        // TODO handle COMPOUNDFIRST
+                        break;
+                    case "COMPOUNDLAST":
+                        // TODO hendle COMPOUNDLAST
+                        break;
+                    case "FULLSTRIP":
+                        // TODO handle FULLSTRIP
+                        break;
+                    case "CIRCUMFIX":
+                        // TODO handle CIRCUMFIX
+                        break;
+                    case "IGNORE":
+                        // TODO handle IGNORE
+                        break;
+                    case "WARN":
+                        // TODO handle WARN
+                        break;
+                    case "FORCEUCASE":
+                        // TODO handle FORCEUCASE
+                        break;
+                    case "LEFTHYPHENMIN":
+                        // TODO handle LEFTHYPHENMIN
+                        break;
+                    case "SUBSTANDARD":
+                        // TODO handle SUBSTANDARD
+                        break;
+                    case "ONLYROOT":
+                        // TODO handle ONLYROOT
                         break;
                     default:
                         MessageFormat mf = new MessageFormat("{0}:{1} : unknown tag: {2}");
@@ -213,7 +347,7 @@ public class AffixParser {
         }
     }
 
-    public String[] getFlags(String affix) {
+    public String[] getFlags(String affix) throws IOException {
         if (UTF8.equals(flagType) || ASCII.equals(flagType)) {
             String[] flags = new String[affix.length()];
             for (int i = 0; i < affix.length(); i++) {
@@ -223,7 +357,7 @@ public class AffixParser {
         }
         if (LONG.equals(flagType)) {
             String[] flags = new String[affix.length() / 2];
-            for (int i = 0; i < affix.length(); i += 2) {
+            for (int i = 0; i < affix.length() / 2; i += 2) {
                 flags[i] = "" + affix.charAt(i) + affix.charAt(i + 1);
             }
             return flags;
@@ -231,7 +365,7 @@ public class AffixParser {
         if (NUM.equals(flagType)) {
             return affix.split(",");
         }
-        return new String[]{};
+        return new String[] {};
     }
 
     public List<String> getWords(String word, String affixString) throws IOException {

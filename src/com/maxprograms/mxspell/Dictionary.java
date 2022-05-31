@@ -81,7 +81,7 @@ public class Dictionary {
             MessageFormat mf = new MessageFormat("Affix file is missing in {0}");
             Object[] args = { zipFile };
             throw new IOException(mf.format(args));
-        }        
+        }
         File affixes = new File(affixFile);
         Charset encoding = EncodingResolver.getEncoding(affixes);
         parser = new AffixParser(affixes, encoding);
@@ -112,8 +112,8 @@ public class Dictionary {
                     }
                 }
                 if (entries != wordsMap.size()) {
-                    MessageFormat mf = new MessageFormat("Expected entries: {0}, entries read: {1}");
-                    Object[] args = { "" + entries, "" + wordsMap.size() };
+                    MessageFormat mf = new MessageFormat("{0}: Expected entries: {1}, entries read: {2}");
+                    Object[] args = { words.getName(), "" + entries, "" + wordsMap.size() };
                     logger.log(Level.WARNING, mf.format(args));
                 }
             }
