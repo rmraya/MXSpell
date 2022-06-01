@@ -30,7 +30,7 @@ public class Dictionary {
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
     public static void main(String[] args) throws IOException {
-        Dictionary dictionary = new Dictionary("dictionaries//es_UY.zip");
+        Dictionary dictionary = new Dictionary("dictionaries//da.zip");
         System.out.println(dictionary.lookup("vayan"));
     }
 
@@ -44,6 +44,14 @@ public class Dictionary {
             Object[] args = { zipFile };
             throw new IOException(mf.format(args));
         }
+        String zipNname = zip.getName();
+        if (zipNname.indexOf('.') != -1) {
+            zipNname = zipNname.substring(0, zipNname.lastIndexOf('.'));
+        }
+        File dataFolder = new File(zip.getParentFile(), zipNname);
+        if (!dataFolder.exists()) {
+            Files.createDirectories(dataFolder.toPath());
+        }
         String wordsFile = "";
         String affixFile = "";
         try (ZipInputStream input = new ZipInputStream(new FileInputStream(zip))) {
@@ -51,7 +59,7 @@ public class Dictionary {
             while ((entry = input.getNextEntry()) != null) {
                 String name = entry.getName();
                 if (name.endsWith(".dic") || name.endsWith(".aff")) {
-                    File tmp = new File(zip.getParentFile(), name);
+                    File tmp = new File(dataFolder, name);
                     if (tmp.exists()) {
                         // remove previous version
                         Files.delete(tmp.toPath());
@@ -99,24 +107,46 @@ public class Dictionary {
                 } catch (NumberFormatException nfe) {
                     MessageFormat mf = new MessageFormat("Missing words count in file {0}");
                     Object[] args = { words.getAbsoluteFile() };
-                    throw new IOException(mf.format(args));
+                    logger.log(Level.WARNING, mf.format(args));
+                    processWordsLine(line);
                 }
                 while ((line = buffered.readLine()) != null) {
-                    int index = line.indexOf("/");
-                    if (index > 0) {
-                        String word = line.substring(0, index);
-                        String affix = line.substring(index + 1);
-                        wordsMap.put(word, new DictionaryEntry(word, parser.getFlags(affix)));
-                    } else {
-                        wordsMap.put(line, new DictionaryEntry(line, null));
-                    }
+                    processWordsLine(line);
                 }
-                if (entries != wordsMap.size()) {
+                if (entries != 0 && entries != wordsMap.size()) {
                     MessageFormat mf = new MessageFormat("{0}: Expected entries: {1}, entries read: {2}");
                     Object[] args = { words.getName(), "" + entries, "" + wordsMap.size() };
                     logger.log(Level.WARNING, mf.format(args));
                 }
             }
+        }
+    }
+
+    private void processWordsLine(String line) throws IOException {
+        String[] parts = line.trim().split("\\/");
+        if (parts.length > 1) {
+            String word = parts[0];
+            String affix = parts[1];
+            if (affix.indexOf("/") != -1) {
+                System.out.println("here");
+            }
+            String[] affixParts = affix.split("\\s+");
+            if (affixParts.length == 1) {
+                // just flags
+                wordsMap.put(word, new DictionaryEntry(word, parser.getFlags(affixParts[0]), null));
+            } else {
+                // contains flags & more
+                StringBuilder builder = new StringBuilder();
+                for (int i = 1; i < affixParts.length; i++) {
+                    builder.append(' ');
+                    builder.append(affixParts[1]);
+                }
+                wordsMap.put(word,
+                        new DictionaryEntry(word, parser.getFlags(affixParts[0]), builder.toString().strip()));
+            }
+        } else {
+            // it's just a word
+            wordsMap.put(line, new DictionaryEntry(line, null, null));
         }
     }
 

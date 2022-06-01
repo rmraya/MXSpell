@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -24,7 +26,8 @@ public class AffixParser {
     private static final String NUM = "num";
     private static final String LONG = "long";
 
-    Map<String, Affix> affixMap;
+    private static final Logger logger = System.getLogger(AffixParser.class.getName());
+    private Map<String, Affix> affixMap;
 
     private char[] tryCharacter;
     private String filename;
@@ -56,13 +59,9 @@ public class AffixParser {
         while ((line = bufferedReader.readLine()) != null) {
             lineNr++;
             line = line.strip();
-            if (line.isBlank() || line.startsWith("#")) {
-                // it's a separator or comment
-                continue;
-            }
-            StringTokenizer tokenizer = new StringTokenizer(line.strip());
-            if (tokenizer.hasMoreTokens()) {
-                String tag = tokenizer.nextToken();
+            String[] parts = line.split("\\s+");
+            if (parts.length > 1) {
+                String tag = parts[0];
                 switch (tag) {
                     case "#":
                         // comment line, ignore
@@ -73,7 +72,7 @@ public class AffixParser {
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        tryCharacter = tokenizer.nextToken().toCharArray();
+                        tryCharacter = parts[1].toCharArray();
                         break;
                     case "SET":
                         // ignore, encoding detected before reaching here
@@ -84,7 +83,7 @@ public class AffixParser {
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        compoundFlag = tokenizer.nextToken();
+                        compoundFlag = parts[1];
                         break;
                     case "COMPOUNDMIN":
                         if (compoundMinimalChars >= 0) {
@@ -93,7 +92,7 @@ public class AffixParser {
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        compoundMinimalChars = Integer.parseInt(tokenizer.nextToken());
+                        compoundMinimalChars = Integer.parseInt(parts[1]);
                         if (compoundMinimalChars < 1 || compoundMinimalChars > 50) {
                             compoundMinimalChars = 3;
                         }
@@ -273,9 +272,12 @@ public class AffixParser {
                         // TODO handle ONLYROOT
                         break;
                     default:
-                        MessageFormat mf = new MessageFormat("{0}:{1} : unknown tag: {2}");
-                        Object[] args = { filename, "" + lineNr, line };
-                        throw new IOException(mf.format(args));
+                        if (!line.startsWith("#")) {
+                            // it does not seem to be a commented-out entry
+                            MessageFormat mf = new MessageFormat("{0}:{1} : unknown line: {2}");
+                            Object[] args = { filename, "" + lineNr, line };
+                            logger.log(Level.WARNING, mf.format(args));
+                        }
                 }
             }
         }
@@ -309,13 +311,13 @@ public class AffixParser {
     }
 
     private void handleReplacement(String line) throws NumberFormatException {
-        StringTokenizer tokenizer = new StringTokenizer(line.substring("REP".length()));
+        String[] parts = line.split("\\s+");
         if (replacementList == null) {
-            replacementSize = Integer.parseInt(tokenizer.nextToken());
+            replacementSize = Integer.parseInt(parts[1]);
             replacementList = new ArrayList<>();
         } else {
-            String what = tokenizer.nextToken();
-            String replace = tokenizer.nextToken();
+            String what = parts[1];
+            String replace = parts[2];
             replacementList.add(new String[] { what, replace });
         }
     }

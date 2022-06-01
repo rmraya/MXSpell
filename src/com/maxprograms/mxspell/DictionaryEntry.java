@@ -16,7 +16,7 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
     private String word;
     private String[] flags;
 
-    public DictionaryEntry(String word, String[] flags) {
+    public DictionaryEntry(String word, String[] flags, String other) {
         this.word = word;
         this.flags = flags;
     }
