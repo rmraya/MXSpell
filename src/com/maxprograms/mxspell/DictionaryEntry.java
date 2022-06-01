@@ -39,7 +39,7 @@ public class DictionaryEntry implements Comparable<DictionaryEntry> {
 
     @Override
     public int hashCode() {
-        return flags != null ? (word + flags.toString()).hashCode() : word.hashCode();
+        return flags != null ? (word + Arrays.toString(flags)).hashCode() : word.hashCode();
     }
 
     @Override
