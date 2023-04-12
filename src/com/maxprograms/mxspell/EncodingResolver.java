@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2022 Maxprograms.
+* Copyright (c) 2023 Maxprograms.
 *
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 1.0 which accompanies this distribution,
@@ -42,12 +42,12 @@ public class EncodingResolver {
             }
         }
         if (!declared.isEmpty() && charset == null) {
-            MessageFormat mf = new MessageFormat("Unsupported dictionary encoding: {0}");
+            MessageFormat mf = new MessageFormat(Messages.getString("EncodingResolver.0"));
             Object[] args = { declared };
             throw new IOException(mf.format(args));
         }
         if (charset == null) {
-            MessageFormat mf = new MessageFormat("SET option not declared in {0}");
+            MessageFormat mf = new MessageFormat(Messages.getString("EncodingResolver.1"));
             Object[] args = { filename };
             throw new IOException(mf.format(args));
         }

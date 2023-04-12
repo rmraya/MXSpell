@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2022 Maxprograms.
+* Copyright (c) 2023 Maxprograms.
 *
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 1.0 which accompanies this distribution,
@@ -30,17 +30,36 @@ public class Dictionary {
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
     public static void main(String[] args) throws IOException {
-        Dictionary dictionary = new Dictionary("dictionaries//da.zip");
-        System.out.println(dictionary.lookup("vayan"));
+        Dictionary dictionary = new Dictionary("dictionaries/da.zip");
+        System.out.println(dictionary.lookup("Aabo"));
     }
 
     private Map<String, DictionaryEntry> wordsMap;
     private AffixParser parser;
 
+    public Dictionary(String wordsFile, String affixFile) throws IOException {
+        File affixes = new File(affixFile);
+        if (!affixes.exists()) {
+            MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.0"));
+            Object[] args = { affixFile };
+            throw new IOException(mf.format(args));
+        }
+        Charset encoding = EncodingResolver.getEncoding(affixes);
+        parser = new AffixParser(affixes, encoding);
+        wordsMap = new TreeMap<>();
+        File words = new File(wordsFile);
+        if (!words.exists()) {
+            MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.1"));
+            Object[] args = { wordsFile };
+            throw new IOException(mf.format(args));
+        }
+        loadWords(words, encoding);
+    }
+
     public Dictionary(String zipFile) throws IOException {
         File zip = new File(zipFile);
         if (!zip.exists()) {
-            MessageFormat mf = new MessageFormat("Zip file {0} does not exist");
+            MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.2"));
             Object[] args = { zipFile };
             throw new IOException(mf.format(args));
         }
@@ -81,12 +100,12 @@ public class Dictionary {
             }
         }
         if (wordsFile.isEmpty()) {
-            MessageFormat mf = new MessageFormat("Words file is missing in {0}");
+            MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.3"));
             Object[] args = { zipFile };
             throw new IOException(mf.format(args));
         }
         if (affixFile.isEmpty()) {
-            MessageFormat mf = new MessageFormat("Affix file is missing in {0}");
+            MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.4"));
             Object[] args = { zipFile };
             throw new IOException(mf.format(args));
         }
@@ -103,9 +122,11 @@ public class Dictionary {
                 int entries = 0;
                 String line = buffered.readLine();
                 try {
-                    entries = Integer.parseInt(line);
+                    // Danish dictionary has comment after word count, remove it
+                    String[] result = line.split("\\s#");
+                    entries = Integer.parseInt(result[0]);
                 } catch (NumberFormatException nfe) {
-                    MessageFormat mf = new MessageFormat("Missing words count in file {0}");
+                    MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.5"));
                     Object[] args = { words.getAbsoluteFile() };
                     logger.log(Level.WARNING, mf.format(args));
                     processWordsLine(line);
@@ -114,7 +135,7 @@ public class Dictionary {
                     processWordsLine(line);
                 }
                 if (entries != 0 && entries != wordsMap.size()) {
-                    MessageFormat mf = new MessageFormat("{0}: Expected entries: {1}, entries read: {2}");
+                    MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.6"));
                     Object[] args = { words.getName(), "" + entries, "" + wordsMap.size() };
                     logger.log(Level.WARNING, mf.format(args));
                 }
@@ -127,9 +148,6 @@ public class Dictionary {
         if (parts.length > 1) {
             String word = parts[0];
             String affix = parts[1];
-            if (affix.indexOf("/") != -1) {
-                System.out.println("here");
-            }
             String[] affixParts = affix.split("\\s+");
             if (affixParts.length == 1) {
                 // just flags

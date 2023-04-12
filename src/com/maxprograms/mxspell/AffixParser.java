@@ -68,7 +68,7 @@ public class AffixParser {
                         break;
                     case "TRY":
                         if (tryCharacter != null) {
-                            MessageFormat mf = new MessageFormat("{0}:{1} : duplicate TRY strings: {2}");
+                            MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.0"));
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
@@ -79,7 +79,7 @@ public class AffixParser {
                         break;
                     case "COMPOUNDFLAG":
                         if (compoundFlag != null) {
-                            MessageFormat mf = new MessageFormat("{0}:{1} : duplicate compound flags: {2}");
+                            MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.1"));
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
@@ -87,8 +87,7 @@ public class AffixParser {
                         break;
                     case "COMPOUNDMIN":
                         if (compoundMinimalChars >= 0) {
-                            MessageFormat mf = new MessageFormat(
-                                    "{0}:{1} : duplicate compound minimal char settings: {2}");
+                            MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.2"));
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
@@ -106,175 +105,175 @@ public class AffixParser {
                     case "PFX":
                         handleAffix(Affix.PFX, line);
                         break;
-                    case "MAP":
-                        // TODO handle MAP
-                        break;
                     case "FLAG":
                         handleFlag(line);
                         break;
+                    case "MAP":
+                        // handle MAP
+                        break;
                     case "KEY":
-                        // TODO handle KEY
+                        // handle KEY
                         break;
                     case "WORDCHARS":
-                        // TODO handle WORDCHARS
+                        // handle WORDCHARS
                         break;
                     case "OCONV":
-                        // TODO handle OCONV
+                        // handle OCONV
                         break;
                     case "BREAK":
-                        // TODO handle BREAK
+                        // handle BREAK
                         break;
                     case "FORBIDDENWORD":
-                        // TODO handle FORBIDDENWORD
+                        // handle FORBIDDENWORD
                         break;
                     case "NOSPLITSUGS":
-                        // TODO handle NOSPLITSUGS
+                        // handle NOSPLITSUGS
                         break;
                     case "MAXNGRAMSUGS":
-                        // TODO handle MAXNGRAMSUGS
+                        // handle MAXNGRAMSUGS
                         break;
                     case "ONLYMAXDIFF":
-                        // TODO handle ONLYMAXDIFF
+                        // handle ONLYMAXDIFF
                         break;
                     case "MAXDIFF":
-                        // TODO handle MAXDIFF
+                        // handle MAXDIFF
                         break;
                     case "ICONV":
-                        // TODO handle ICONV
+                        // handle ICONV
                         break;
                     case "FIRST":
-                        // TODO handle FIRST
+                        // handle FIRST
                         break;
                     case "LANG":
-                        // TODO handle LANG
+                        // handle LANG
                         break;
                     case "NEEDAFFIX":
-                        // TODO handle NEEDAFFIX
+                        // handle NEEDAFFIX
                         break;
                     case "NOSUGGEST":
-                        // TODO handle NOSUGGEST
+                        // handle NOSUGGEST
                         break;
                     case "KEEPCASE":
-                        // TODO handle KEEPCASE
+                        // handle KEEPCASE
                         break;
                     case "COMPOUNDWORDMAX":
-                        // TODO handle COMPOUNDWORDMAX
+                        // handle COMPOUNDWORDMAX
                         break;
                     case "COMPOUNDBEGIN":
-                        // TODO handle COMPOUNDBEGIN
+                        // handle COMPOUNDBEGIN
                         break;
                     case "COMPOUNDPERMITFLAG":
-                        // TODO handle COMPOUNDPERMITFLAG
+                        // handle COMPOUNDPERMITFLAG
                         break;
                     case "COMPOUNDMIDDLE":
-                        // TODO handle COMPOUNDMIDDLE
+                        // handle COMPOUNDMIDDLE
                         break;
                     case "COMPOUNDEND":
-                        // TODO handle COMPOUNDEND
+                        // handle COMPOUNDEND
                         break;
                     case "CHECKCOMPOUNDTRIPLE":
-                        // TODO handle CHECKCOMPOUNDTRIPLE
+                        // handle CHECKCOMPOUNDTRIPLE
                         break;
                     case "SIMPLIFIEDTRIPLE":
-                        // TODO handle SIMPLIFIEDTRIPLE
+                        // handle SIMPLIFIEDTRIPLE
                         break;
                     case "COMPOUNDRULE":
-                        // TODO handle COMPOUNDRULE
+                        // handle COMPOUNDRULE
                         break;
                     case "COMPOUNDMORESUFFIXES":
-                        // TODO handle COMPOUNDMORESUFFIXES
+                        // handle COMPOUNDMORESUFFIXES
                         break;
                     case "COMPOUNDSYLLABLE":
-                        // TODO handle COMPOUNDSYLLABLE
+                        // handle COMPOUNDSYLLABLE
                         break;
                     case "SYLLABLENUM":
-                        // TODO handle SYLLABLENUM
+                        // handle SYLLABLENUM
                         break;
                     case "ONLYINCOMPOUND":
-                        // TODO handle ONLYINCOMPOUND
+                        // handle ONLYINCOMPOUND
                         break;
                     case "CHECKCOMPOUNDDUP":
-                        // TODO handle CHECKCOMPOUNDDUP
+                        // handle CHECKCOMPOUNDDUP
                         break;
                     case "MAXCPDSUGS":
-                        // TODO handle MAXCPDSUGS
+                        // handle MAXCPDSUGS
                         break;
                     case "COMPOUNDROOT":
-                        // TODO handle COMPOUNDROOT
+                        // handle COMPOUNDROOT
                         break;
                     case "HU_KOTOHANGZO":
-                        // TODO handle HU_KOTOHANGZO (only in "hu")
+                        // handle HU_KOTOHANGZO (only in "hu")
                         break;
                     case "GENERATE":
-                        // TODO handle GENERATE (only in "hu")
+                        // handle GENERATE (only in "hu")
                         break;
                     case "LEMMA_PRESENT":
-                        // TODO handle LEMMA_PRESENT (only in "hu")
+                        // handle LEMMA_PRESENT (only in "hu")
                         break;
                     case "AF":
-                        // TODO handle AF
+                        // handle AF
                         break;
                     case "AM":
-                        // TODO handle AM
+                        // handle AM
                         break;
                     case "NAME":
-                        // TODO handle NAME
+                        // handle NAME
                         break;
                     case "HOME":
-                        // TODO handle HOME
+                        // handle HOME
                         break;
                     case "VERSION":
-                        // TODO handle VERSION
+                        // handle VERSION
                         break;
                     case "CHECKSHARPS":
-                        // TODO handle CHECKSHARPS
+                        // handle CHECKSHARPS
                         break;
                     case "CHECKCOMPOUNDREP":
-                        // TODO handle CHECKCOMPOUNDREP
+                        // handle CHECKCOMPOUNDREP
                         break;
                     case "COMPOUNDFORBIDFLAG":
-                        // TODO handle COMPOUNDFORBIDFLAG
+                        // handle COMPOUNDFORBIDFLAG
                         break;
                     case "CHECKCOMPOUNDCASE":
-                        // TODO handel CHECKCOMPOUNDCASE
+                        // handel CHECKCOMPOUNDCASE
                         break;
                     case "CHECKCOMPOUNDPATTERN":
-                        // TODO handle CHECKCOMPOUNDPATTERN
+                        // handle CHECKCOMPOUNDPATTERN
                         break;
                     case "COMPOUNDFIRST":
-                        // TODO handle COMPOUNDFIRST
+                        // handle COMPOUNDFIRST
                         break;
                     case "COMPOUNDLAST":
-                        // TODO hendle COMPOUNDLAST
+                        // hendle COMPOUNDLAST
                         break;
                     case "FULLSTRIP":
-                        // TODO handle FULLSTRIP
+                        // handle FULLSTRIP
                         break;
                     case "CIRCUMFIX":
-                        // TODO handle CIRCUMFIX
+                        // handle CIRCUMFIX
                         break;
                     case "IGNORE":
-                        // TODO handle IGNORE
+                        // handle IGNORE
                         break;
                     case "WARN":
-                        // TODO handle WARN
+                        // handle WARN
                         break;
                     case "FORCEUCASE":
-                        // TODO handle FORCEUCASE
+                        // handle FORCEUCASE
                         break;
                     case "LEFTHYPHENMIN":
-                        // TODO handle LEFTHYPHENMIN
+                        // handle LEFTHYPHENMIN
                         break;
                     case "SUBSTANDARD":
-                        // TODO handle SUBSTANDARD
+                        // handle SUBSTANDARD
                         break;
                     case "ONLYROOT":
-                        // TODO handle ONLYROOT
+                        // handle ONLYROOT
                         break;
                     default:
                         if (!line.startsWith("#")) {
                             // it does not seem to be a commented-out entry
-                            MessageFormat mf = new MessageFormat("{0}:{1} : unknown line: {2}");
+                            MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.3"));
                             Object[] args = { filename, "" + lineNr, line };
                             logger.log(Level.WARNING, mf.format(args));
                         }
@@ -282,7 +281,7 @@ public class AffixParser {
             }
         }
         if (replacementList != null && replacementSize != replacementList.size()) {
-            MessageFormat mf = new MessageFormat("{0} Replacement table size is {0}, expected size:{1}");
+            MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.4"));
             Object[] args = { filename, "" + replacementList.size(), "" + replacementSize };
             throw new IOException(mf.format(args));
         }
@@ -292,7 +291,7 @@ public class AffixParser {
             String key = it.next();
             Affix affix = affixMap.get(key);
             if (!affix.hasAllRules()) {
-                MessageFormat mf = new MessageFormat("{0} Incorrect rules number in suffix {1}");
+                MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.5"));
                 Object[] args = { filename, key };
                 throw new IOException(mf.format(args));
             }
@@ -304,7 +303,7 @@ public class AffixParser {
         flagType = tokenizer.nextToken();
         List<String> validFlags = Arrays.asList(ASCII, UTF8, NUM, LONG);
         if (!validFlags.contains(flagType)) {
-            MessageFormat mf = new MessageFormat("{0}:{1} Unupported FLAG type: {2}");
+            MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.6"));
             Object[] args = { filename, "" + lineNr, flagType };
             throw new IOException(mf.format(args));
         }
@@ -336,7 +335,7 @@ public class AffixParser {
                     affix = "";
                     condition = ".";
                 } else {
-                    MessageFormat mf = new MessageFormat("{0}:{1} Unupported affix: {2}");
+                    MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.7"));
                     Object[] args = { filename, "" + lineNr, line };
                     throw new IOException(mf.format(args));
                 }
@@ -377,7 +376,7 @@ public class AffixParser {
             String flag = flags[i];
             Affix affix = affixMap.get(flag);
             if (affix == null) {
-                MessageFormat mf = new MessageFormat("Unnown affix {0} for word {1}");
+                MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.8"));
                 Object[] args = { flag, word };
                 throw new IOException(mf.format(args));
             }
