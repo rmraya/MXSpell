@@ -348,7 +348,7 @@ public class AffixParser {
         }
     }
 
-    public String[] getFlags(String affix) throws IOException {
+    public String[] getFlags(String affix) {
         if (UTF8.equals(flagType) || ASCII.equals(flagType)) {
             String[] flags = new String[affix.length()];
             for (int i = 0; i < affix.length(); i++) {
