@@ -67,7 +67,7 @@ public class Dictionary {
         if (zipNname.indexOf('.') != -1) {
             zipNname = zipNname.substring(0, zipNname.lastIndexOf('.'));
         }
-        File dataFolder = new File(zip.getParentFile(), zipNname);
+        File dataFolder = new File(zip.getParentFile(), zipNname.replace('_', '-'));
         if (!dataFolder.exists()) {
             Files.createDirectories(dataFolder.toPath());
         }
