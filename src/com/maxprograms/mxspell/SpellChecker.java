@@ -1,3 +1,12 @@
+/*******************************************************************************
+* Copyright (c) 2023 Maxprograms.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Eclipse Public License 1.0 which accompanies this distribution,
+* and is available at https://www.eclipse.org/org/documents/epl-v10.html
+*
+* Contributors: Maxprograms - initial API and implementation
+*******************************************************************************/
 package com.maxprograms.mxspell;
 
 import java.io.File;
@@ -10,7 +19,7 @@ public class SpellChecker {
 
     private Map<String, String> dictionaries;
     private Dictionary dictionary;
-    private WordComposer composer;
+    private SpellCorrector corrector;
 
     // language must be a valid BCP47 language code
     public SpellChecker(String language, String dictionaryFolder) throws IOException {
@@ -31,13 +40,21 @@ public class SpellChecker {
             String zip = dictionaries.get(language);
             dictionary = new Dictionary(zip);
         }
-        composer = new WordComposer(dictionary);
+        corrector = new SpellCorrector(dictionary, language);
+    }
+
+    public String[] suggest(String word) {
+        return corrector.suggest(word);
     }
 
     public static void main(String[] args) {
         try {
             SpellChecker instance = new SpellChecker("es-ES",
                     "/Users/rmraya/Documents/GitHub/MXSpell/HunspellDictionaries");
+            String[] suggestions = instance.suggest("almohadas");
+            for (String suggestion : suggestions) {
+                System.out.println(suggestion);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

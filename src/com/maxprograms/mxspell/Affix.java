@@ -47,4 +47,11 @@ public class Affix {
         return rules.size() == rulesCount;
     }
 
+    public String getFlags() {
+        return flag;
+    }
+
+    public boolean isCrossProduct() {
+        return isCrossProduct;
+    }
 }

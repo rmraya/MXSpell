@@ -9,7 +9,6 @@
  * Contributors:
  *     Maxprograms - initial API and implementation
  *******************************************************************************/
-
 package com.maxprograms.mxspell;
 
 import java.io.IOException;
@@ -27,12 +26,22 @@ public class Messages {
     }
 
     public static String getString(String key) {
+        String resourceName = "mxspell";
         try {
             if (props == null) {
                 Locale locale = Locale.getDefault();
-                String extension = "en".equals(locale.getLanguage()) ? ".properties"
-                        : "_" + locale.getLanguage() + ".properties";
-                try (InputStream is = Messages.class.getResourceAsStream("mxspell" + extension)) {
+                String language = locale.getLanguage();
+                String extension = "_" + language + ".properties";
+                // check if there is a resource for full language code
+                if (Messages.class.getResource(resourceName + extension) == null) {
+                    // if not, check if there is a resource for language only
+                    extension = "_" + language.substring(0, 2) + ".properties";
+                }
+                if (Messages.class.getResource(resourceName + extension) == null) {
+                    // if not, use the default resource
+                    extension = ".properties";
+                }
+                try (InputStream is = Messages.class.getResourceAsStream(resourceName + extension)) {
                     try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
                         props = new Properties();
                         props.load(reader);
@@ -40,7 +49,7 @@ public class Messages {
                 }
             }
             return props.getProperty(key, '!' + key + '!');
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             return '!' + key + '!';
         }
     }

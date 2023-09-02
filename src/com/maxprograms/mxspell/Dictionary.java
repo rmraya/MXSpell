@@ -20,7 +20,10 @@ import java.lang.System.Logger.Level;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.text.MessageFormat;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -36,6 +39,7 @@ public class Dictionary {
 
     private Map<String, DictionaryEntry> wordsMap;
     private AffixParser parser;
+    private Set<String> wordsSet;
 
     public Dictionary(String wordsFile, String affixFile) throws IOException {
         File affixes = new File(affixFile);
@@ -47,6 +51,7 @@ public class Dictionary {
         Charset encoding = EncodingResolver.getEncoding(affixes);
         parser = new AffixParser(affixes, encoding);
         wordsMap = new TreeMap<>();
+        wordsSet = new HashSet<>();
         File words = new File(wordsFile);
         if (!words.exists()) {
             MessageFormat mf = new MessageFormat(Messages.getString("Dictionary.1"));
@@ -113,6 +118,7 @@ public class Dictionary {
         Charset encoding = EncodingResolver.getEncoding(affixes);
         parser = new AffixParser(affixes, encoding);
         wordsMap = new TreeMap<>();
+        wordsSet = new HashSet<>();
         loadWords(new File(wordsFile), encoding);
     }
 
@@ -162,14 +168,33 @@ public class Dictionary {
                 wordsMap.put(word,
                         new DictionaryEntry(word, parser.getFlags(affixParts[0]), builder.toString().strip()));
             }
+            DictionaryEntry entry = wordsMap.get(word);
+            if (entry.getFlags() != null) {
+                List<String> words = parser.getWords(word, entry.getFlags());
+                wordsSet.addAll(words);
+            }
         } else {
             // it's just a word
             wordsMap.put(line, new DictionaryEntry(line, null, null));
+            wordsSet.add(line);
         }
     }
 
     public DictionaryEntry lookup(String word) {
-        return wordsMap.get(word);
+        if (wordsMap.containsKey(word)) {
+            return wordsMap.get(word);
+        }
+        if (wordsSet.contains(word)) {
+            return new DictionaryEntry(word, null, null);
+        }
+        return null;
     }
 
+    public Map<String, String> getReplacementMap() {
+        return parser.getReplacementMap();
+    }
+
+    public char[] getTryCharacters() {
+        return parser.getTryCharacters();
+    }
 }

@@ -1,3 +1,12 @@
+/*******************************************************************************
+* Copyright (c) 2023 Maxprograms.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Eclipse Public License 1.0 which accompanies this distribution,
+* and is available at https://www.eclipse.org/org/documents/epl-v10.html
+*
+* Contributors: Maxprograms - initial API and implementation
+*******************************************************************************/
 package com.maxprograms.mxspell;
 
 import java.io.BufferedReader;
@@ -29,20 +38,19 @@ public class AffixParser {
     private static final Logger logger = System.getLogger(AffixParser.class.getName());
     private Map<String, Affix> affixMap;
 
-    private char[] tryCharacter;
+    private char[] tryCharacters;
     private String filename;
     private int lineNr;
 
     private String flagType = ASCII;
     String compoundFlag;
     int compoundMinimalChars = -1;
-    private List<String[]> replacementList;
+    private Map<String, String> replacementMap;
     private int replacementSize;
 
     AffixParser(File file, Charset encoding) throws IOException {
         this.filename = file.getName();
         affixMap = new HashMap<>();
-
         try (FileReader reader = new FileReader(file, encoding)) {
             try (BufferedReader bufferedReader = new BufferedReader(reader)) {
                 parseAffixFile(bufferedReader);
@@ -67,12 +75,12 @@ public class AffixParser {
                         // comment line, ignore
                         break;
                     case "TRY":
-                        if (tryCharacter != null) {
+                        if (tryCharacters != null) {
                             MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.0"));
                             Object[] args = { filename, "" + lineNr, line };
                             throw new IOException(mf.format(args));
                         }
-                        tryCharacter = parts[1].toCharArray();
+                        tryCharacters = parts[1].toCharArray();
                         break;
                     case "SET":
                         // ignore, encoding detected before reaching here
@@ -280,9 +288,9 @@ public class AffixParser {
                 }
             }
         }
-        if (replacementList != null && replacementSize != replacementList.size()) {
+        if (replacementMap != null && replacementSize != replacementMap.size()) {
             MessageFormat mf = new MessageFormat(Messages.getString("AffixParser.4"));
-            Object[] args = { filename, "" + replacementList.size(), "" + replacementSize };
+            Object[] args = { filename, "" + replacementMap.size(), "" + replacementSize };
             throw new IOException(mf.format(args));
         }
         Set<String> keySet = affixMap.keySet();
@@ -311,13 +319,13 @@ public class AffixParser {
 
     private void handleReplacement(String line) throws NumberFormatException {
         String[] parts = line.split("\\s+");
-        if (replacementList == null) {
+        if (replacementMap == null) {
             replacementSize = Integer.parseInt(parts[1]);
-            replacementList = new ArrayList<>();
+            replacementMap = new HashMap<>();
         } else {
             String what = parts[1];
             String replace = parts[2];
-            replacementList.add(new String[] { what, replace });
+            replacementMap.put(what, replace);
         }
     }
 
@@ -369,9 +377,8 @@ public class AffixParser {
         return new String[] {};
     }
 
-    public List<String> getWords(String word, String affixString) throws IOException {
+    public List<String> getWords(String word, String[] flags) throws IOException {
         List<String> result = new ArrayList<>();
-        String[] flags = getFlags(affixString);
         for (int i = 0; i < flags.length; i++) {
             String flag = flags[i];
             Affix affix = affixMap.get(flag);
@@ -422,6 +429,14 @@ public class AffixParser {
         }
         String regex = type.equals(Affix.PFX) ? "^" + condition + ".*" : ".*" + condition + "$";
         return word.matches(regex);
+    }
+
+    public Map<String, String> getReplacementMap() {
+        return replacementMap;
+    }
+
+    public char[] getTryCharacters() {
+        return tryCharacters;
     }
 
 }
