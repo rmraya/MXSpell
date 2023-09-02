@@ -32,11 +32,6 @@ public class Dictionary {
 
     private static final Logger logger = System.getLogger(Dictionary.class.getName());
 
-    public static void main(String[] args) throws IOException {
-        Dictionary dictionary = new Dictionary("dictionaries/da.zip");
-        System.out.println(dictionary.lookup("Aabo"));
-    }
-
     private Map<String, DictionaryEntry> wordsMap;
     private AffixParser parser;
     private Set<String> wordsSet;

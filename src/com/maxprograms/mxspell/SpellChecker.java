@@ -47,19 +47,6 @@ public class SpellChecker {
         return corrector.suggest(word);
     }
 
-    public static void main(String[] args) {
-        try {
-            SpellChecker instance = new SpellChecker("es-ES",
-                    "/Users/rmraya/Documents/GitHub/MXSpell/HunspellDictionaries");
-            String[] suggestions = instance.suggest("almohadas");
-            for (String suggestion : suggestions) {
-                System.out.println(suggestion);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private Dictionary makeDictionary(File dataFolder) throws IOException {
         String affix = null;
         String words = null;
