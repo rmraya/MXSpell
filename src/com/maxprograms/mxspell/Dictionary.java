@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.util.HashSet;
@@ -35,6 +36,9 @@ public class Dictionary {
     private Map<String, DictionaryEntry> wordsMap;
     private AffixParser parser;
     private Set<String> wordsSet;
+    private File dataFolder;
+    private List<String> learnedWords;
+    private List<String> ignoredWords;
 
     public Dictionary(String wordsFile, String affixFile) throws IOException {
         File affixes = new File(affixFile);
@@ -54,6 +58,8 @@ public class Dictionary {
             throw new IOException(mf.format(args));
         }
         loadWords(words, encoding);
+        dataFolder = words.getParentFile();
+        loadExceptions();
     }
 
     public Dictionary(String zipFile) throws IOException {
@@ -67,7 +73,7 @@ public class Dictionary {
         if (zipNname.indexOf('.') != -1) {
             zipNname = zipNname.substring(0, zipNname.lastIndexOf('.'));
         }
-        File dataFolder = new File(zip.getParentFile(), zipNname.replace('_', '-'));
+        dataFolder = new File(zip.getParentFile(), zipNname.replace('_', '-'));
         if (!dataFolder.exists()) {
             Files.createDirectories(dataFolder.toPath());
         }
@@ -115,6 +121,68 @@ public class Dictionary {
         wordsMap = new TreeMap<>();
         wordsSet = new HashSet<>();
         loadWords(new File(wordsFile), encoding);
+        loadExceptions();
+    }
+
+    private void loadExceptions() {
+        learnedWords = new java.util.ArrayList<>();
+        File learnedWordsFile = new File(dataFolder, "learned.txt");
+        if (learnedWordsFile.exists()) {
+            try (FileReader reader = new FileReader(learnedWordsFile, StandardCharsets.UTF_8)) {
+                try (BufferedReader buffered = new BufferedReader(reader)) {
+                    String line = buffered.readLine();
+                    while (line != null) {
+                        learnedWords.add(line);
+                    }
+                }
+            } catch (IOException e) {
+                logger.log(Level.WARNING, e.getMessage());
+            }
+        }
+        ignoredWords = new java.util.ArrayList<>();
+        File ignoredWordsFile = new File(dataFolder, "ignored.txt");
+        if (ignoredWordsFile.exists()) {
+            try (FileReader reader = new FileReader(ignoredWordsFile, StandardCharsets.UTF_8)) {
+                try (BufferedReader buffered = new BufferedReader(reader)) {
+                    String line = buffered.readLine();
+                    while (line != null) {
+                        ignoredWords.add(line);
+                    }
+                }
+            } catch (IOException e) {
+                logger.log(Level.WARNING, e.getMessage());
+            }
+        }
+    }
+
+    public void learn(String word) {
+        if (!learnedWords.contains(word)) {
+            learnedWords.add(word);
+        }
+        File learnedWordsFile = new File(dataFolder, "learned.txt");
+        try (FileOutputStream output = new FileOutputStream(learnedWordsFile.getAbsolutePath())) {
+            for (String w : learnedWords) {
+                output.write(w.getBytes(StandardCharsets.UTF_8));
+                output.write('\n');
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, e.getMessage());
+        }
+    }
+
+    public void ignoreWord(String word) {
+        if (!ignoredWords.contains(word)) {
+            ignoredWords.add(word);
+        }
+        File ignoredWordsFile = new File(dataFolder, "ignored.txt");
+        try (FileOutputStream output = new FileOutputStream(ignoredWordsFile.getAbsolutePath())) {
+            for (String w : ignoredWords) {
+                output.write(w.getBytes(StandardCharsets.UTF_8));
+                output.write('\n');
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, e.getMessage());
+        }
     }
 
     private void loadWords(File words, Charset encoding) throws IOException {
