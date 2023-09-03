@@ -42,25 +42,23 @@ public class SpellCorrector {
                 return new String[] {};
             }
         }
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         Set<String> checkList = new HashSet<>();
 
         int length = word.length();
 
         // try removing a char at a time
         for (int i = 0; i < length; i++) {
-            StringBuffer candidate = new StringBuffer();
+            StringBuilder candidate = new StringBuilder();
             for (int j = 0; j < length; j++) {
                 if (i != j) {
                     candidate.append(word.charAt(j));
                 }
             }
             entry = dictionary.lookup(candidate.toString());
-            if (entry != null) {
-                if (!checkList.contains(candidate.toString())) {
-                    result.add(candidate.toString());
-                    checkList.add(candidate.toString());
-                }
+            if (entry != null && !checkList.contains(candidate.toString())) {
+                result.add(candidate.toString());
+                checkList.add(candidate.toString());
             }
         }
 
@@ -75,11 +73,9 @@ public class SpellCorrector {
                 while (index != -1) {
                     String candidate = word.substring(0, index) + replace + word.substring(index + key.length());
                     entry = dictionary.lookup(candidate);
-                    if (entry != null) {
-                        if (!checkList.contains(candidate)) {
-                            result.add(candidate);
-                            checkList.add(candidate);
-                        }
+                    if (entry != null && !checkList.contains(candidate)) {
+                        result.add(candidate);
+                        checkList.add(candidate);
                     }
                     index = word.indexOf(key, index + 1);
                 }
@@ -88,7 +84,7 @@ public class SpellCorrector {
         // try replacing each char with a TRY character
         for (int i = 0; i < tryCharacters.length; i++) {
             for (int j = 0; j < length; j++) {
-                StringBuffer candidate = new StringBuffer();
+                StringBuilder candidate = new StringBuilder();
                 for (int h = 0; h < length; h++) {
                     if (h != j) {
                         candidate.append(word.charAt(h));
@@ -97,11 +93,9 @@ public class SpellCorrector {
                     }
                 }
                 entry = dictionary.lookup(candidate.toString());
-                if (entry != null) {
-                    if (!checkList.contains(candidate.toString())) {
-                        result.add(candidate.toString());
-                        checkList.add(candidate.toString());
-                    }
+                if (entry != null && !checkList.contains(candidate.toString())) {
+                    result.add(candidate.toString());
+                    checkList.add(candidate.toString());
                 }
             }
         }
@@ -119,18 +113,16 @@ public class SpellCorrector {
                     }
                 }
                 entry = dictionary.lookup(candidate.toString());
-                if (entry != null) {
-                    if (!checkList.contains(candidate.toString())) {
-                        result.add(candidate.toString());
-                        checkList.add(candidate.toString());
-                    }
+                if (entry != null && !checkList.contains(candidate.toString())) {
+                    result.add(candidate.toString());
+                    checkList.add(candidate.toString());
                 }
             }
         }
 
         // try swapping 2 characters at a time
         for (int i = 0; i < length - 1; i++) {
-            StringBuffer candidate = new StringBuffer();
+            StringBuilder candidate = new StringBuilder();
             for (int j = 0; j < length; j++) {
                 if (i != j) {
                     candidate.append(word.charAt(j));
@@ -141,11 +133,9 @@ public class SpellCorrector {
                 }
             }
             entry = dictionary.lookup(candidate.toString());
-            if (entry != null) {
-                if (!checkList.contains(candidate.toString())) {
-                    result.add(candidate.toString());
-                    checkList.add(candidate.toString());
-                }
+            if (entry != null && !checkList.contains(candidate.toString())) {
+                result.add(candidate.toString());
+                checkList.add(candidate.toString());
             }
         }
 

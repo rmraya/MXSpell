@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2-transitional.xsd" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file original="com/maxprograms/mxspell/mxspell.properties" source-language="en" target-language="es" datatype="javapropertyresourcebundle" tool-id="OpenXLIFF">
+    <header>
+      <skl>
+        <internal-file form="base64">RGljdGlvbmFyeS4wPSUlJTAlJSUKRGljdGlvbmFyeS4xPSUlJTElJSUKRGljdGlvbmFyeS4yPSUl
+JTIlJSUKRGljdGlvbmFyeS4zPSUlJTMlJSUKRGljdGlvbmFyeS40PSUlJTQlJSUKRGljdGlvbmFy
+eS41PSUlJTUlJSUKRGljdGlvbmFyeS42PSUlJTYlJSUKCkFmZml4UGFyc2VyLjA9JSUlNyUlJQpB
+ZmZpeFBhcnNlci4xPSUlJTglJSUKQWZmaXhQYXJzZXIuMj0lJSU5JSUlCkFmZml4UGFyc2VyLjM9
+JSUlMTAlJSUKQWZmaXhQYXJzZXIuND0lJSUxMSUlJQpBZmZpeFBhcnNlci41PSUlJTEyJSUlCkFm
+Zml4UGFyc2VyLjY9JSUlMTMlJSUKQWZmaXhQYXJzZXIuNz0lJSUxNCUlJQpBZmZpeFBhcnNlci44
+PSUlJTE1JSUlCgpFbmNvZGluZ1Jlc29sdmVyLjA9JSUlMTYlJSUKRW5jb2RpbmdSZXNvbHZlci4x
+PSUlJTE3JSUlCgpTcGVsbENoZWNrZXIuMD0lJSUxOCUlJQpTcGVsbENoZWNrZXIuMT0lJSUxOSUl
+JQpTcGVsbENoZWNrZXIuMj0lJSUyMCUlJQo=</internal-file>
+      </skl>
+      <tool tool-version="3.13.0 20230829_0823" tool-id="OpenXLIFF" tool-name="OpenXLIFF Filters"/>
+    </header>
+    <?encoding UTF-8?>
+    <body>
+      <trans-unit resname="Dictionary.0" approved="yes" id="0" xml:space="preserve">
+      <source>Affix file {0} does not exist</source>
+      <target>El archivo de Afijo {0} no existe.</target>
+   </trans-unit>
+      <trans-unit resname="Dictionary.1" approved="yes" id="1" xml:space="preserve">
+      <source>Words file {0} does not exist</source>
+      <target>El archivo Palabras {0} no existe.</target>
+   </trans-unit>
+      <trans-unit resname="Dictionary.2" approved="yes" id="2" xml:space="preserve">
+      <source>Zip file {0} does not exist</source>
+      <target>El archivo zip {0} no existe.</target>
+   </trans-unit>
+      <trans-unit resname="Dictionary.3" approved="yes" id="3" xml:space="preserve">
+      <source>Words file is missing in {0}</source>
+      <target>Falta el archivo Palabras en {0}</target>
+   </trans-unit>
+      <trans-unit resname="Dictionary.4" approved="yes" id="4" xml:space="preserve">
+      <source>Affix file is missing in {0}</source>
+      <target>Falta el archivo Afijo en {0}</target>
+   </trans-unit>
+      <trans-unit resname="Dictionary.5" approved="yes" id="5" xml:space="preserve">
+      <source>Missing words count in file {0}</source>
+      <target>Falta el recuento de palabras en el archivo {0}</target>
+   </trans-unit>
+      <trans-unit resname="Dictionary.6" approved="yes" id="6" xml:space="preserve">
+      <source>{0}: Expected entries: {1}, entries read: {2}</source>
+      <target>{0}: Entradas esperadas: {1}, entradas leídas: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.0" approved="yes" id="7" xml:space="preserve">
+      <source>{0}:{1} : duplicate TRY strings: {2}</source>
+      <target>{0}:{1} : cadenas TRY duplicadas: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.1" approved="yes" id="8" xml:space="preserve">
+      <source>{0}:{1} : duplicate compound flags: {2}</source>
+      <target>{0}:{1} : banderas compuestas duplicadas: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.2" approved="yes" id="9" xml:space="preserve">
+      <source>{0}:{1} : duplicate compound minimal char settings: {2}</source>
+      <target>{0}:{1} : configuración de caracteres mínimos compuestos duplicados: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.3" approved="yes" id="10" xml:space="preserve">
+      <source>{0}:{1} : unknown line: {2}</source>
+      <target>{0}:{1} : línea desconocida: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.4" approved="yes" id="11" xml:space="preserve">
+      <source>{0} Replacement table size is {0}, expected size:{1}</source>
+      <target>{0} El tamaño de la tabla de reemplazo es {0}, tamaño esperado:{1}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.5" approved="yes" id="12" xml:space="preserve">
+      <source>{0} Incorrect rules number in suffix {1}</source>
+      <target>{0} Número de reglas incorrecto en el sufijo {1}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.6" approved="yes" id="13" xml:space="preserve">
+      <source>{0}:{1} Unupported FLAG type: {2}</source>
+      <target>{0}:{1} Tipo de FLAG no soportado: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.7" approved="yes" id="14" xml:space="preserve">
+      <source>{0}:{1} Unupported affix: {2}</source>
+      <target>{0}:{1} Afijo no admitido: {2}</target>
+   </trans-unit>
+      <trans-unit resname="AffixParser.8" approved="yes" id="15" xml:space="preserve">
+      <source>Unnown affix {0} for word {1}</source>
+      <target>Afijo desconocido {0} para palabra {1}</target>
+   </trans-unit>
+      <trans-unit resname="EncodingResolver.0" approved="yes" id="16" xml:space="preserve">
+      <source>Unsupported dictionary encoding: {0}</source>
+      <target>Codificación de diccionario no compatible: {0}</target>
+   </trans-unit>
+      <trans-unit resname="EncodingResolver.1" approved="yes" id="17" xml:space="preserve">
+      <source>SET option not declared in {0}</source>
+      <target>Opción SET no declarada en {0}</target>
+   </trans-unit>
+      <trans-unit resname="SpellChecker.0" approved="yes" id="18" xml:space="preserve">
+      <source>Dictionary not found for {0}</source>
+      <target>Diccionario no encontrado para "{0}".</target>
+   </trans-unit>
+      <trans-unit resname="SpellChecker.1" approved="yes" id="19" xml:space="preserve">
+      <source>Folder ''{0}'' does not exist</source>
+      <target>La carpeta ''{0}'' no existe</target>
+   </trans-unit>
+      <trans-unit resname="SpellChecker.2" approved="yes" id="20" xml:space="preserve">
+      <source>''{0}'' is not a directory</source>
+      <target>''{0}'' no es un directorio</target>
+   </trans-unit>
+    </body>
+  </file>
+</xliff>
