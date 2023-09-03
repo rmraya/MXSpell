@@ -9,6 +9,7 @@
 *******************************************************************************/
 package com.maxprograms.mxspell;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,15 +37,23 @@ public class SpellCorrector {
         if (entry != null) {
             return new String[] {};
         }
-        if (isCapitalized(word)) {
-            entry = dictionary.lookup(word.toLowerCase(locale));
+        if (isUppercase(word)) {
+            String lower = word.toLowerCase(locale);
+            entry = dictionary.lookup(lower);
             if (entry != null) {
                 return new String[] {};
             }
         }
+        if (isCapitalized(word)) {
+            String lower = word.toLowerCase(locale);
+            entry = dictionary.lookup(lower);
+            if (entry != null) {
+                return new String[] {};
+            }
+        }
+
         List<String> result = new ArrayList<>();
         Set<String> checkList = new HashSet<>();
-
         int length = word.length();
 
         // try removing a char at a time
@@ -56,9 +65,19 @@ public class SpellCorrector {
                 }
             }
             entry = dictionary.lookup(candidate.toString());
-            if (entry != null && !checkList.contains(candidate.toString())) {
-                result.add(candidate.toString());
-                checkList.add(candidate.toString());
+            if (entry != null) {
+                try {
+                    List<String> words = dictionary.getWords(entry);
+                    if (words.contains(word)) {
+                        return new String[] {};
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (!checkList.contains(candidate.toString())) {
+                    result.add(candidate.toString());
+                    checkList.add(candidate.toString());
+                }
             }
         }
 
@@ -73,9 +92,19 @@ public class SpellCorrector {
                 while (index != -1) {
                     String candidate = word.substring(0, index) + replace + word.substring(index + key.length());
                     entry = dictionary.lookup(candidate);
-                    if (entry != null && !checkList.contains(candidate)) {
-                        result.add(candidate);
-                        checkList.add(candidate);
+                    if (entry != null) {
+                        try {
+                            List<String> words = dictionary.getWords(entry);
+                            if (words.contains(word)) {
+                                return new String[] {};
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        if (!checkList.contains(candidate.toString())) {
+                            result.add(candidate.toString());
+                            checkList.add(candidate.toString());
+                        }
                     }
                     index = word.indexOf(key, index + 1);
                 }
@@ -93,9 +122,19 @@ public class SpellCorrector {
                     }
                 }
                 entry = dictionary.lookup(candidate.toString());
-                if (entry != null && !checkList.contains(candidate.toString())) {
-                    result.add(candidate.toString());
-                    checkList.add(candidate.toString());
+                if (entry != null) {
+                    try {
+                        List<String> words = dictionary.getWords(entry);
+                        if (words.contains(word)) {
+                            return new String[] {};
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (!checkList.contains(candidate.toString())) {
+                        result.add(candidate.toString());
+                        checkList.add(candidate.toString());
+                    }
                 }
             }
         }
@@ -113,9 +152,19 @@ public class SpellCorrector {
                     }
                 }
                 entry = dictionary.lookup(candidate.toString());
-                if (entry != null && !checkList.contains(candidate.toString())) {
-                    result.add(candidate.toString());
-                    checkList.add(candidate.toString());
+                if (entry != null) {
+                    try {
+                        List<String> words = dictionary.getWords(entry);
+                        if (words.contains(word)) {
+                            return new String[] {};
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (!checkList.contains(candidate.toString())) {
+                        result.add(candidate.toString());
+                        checkList.add(candidate.toString());
+                    }
                 }
             }
         }
@@ -133,9 +182,19 @@ public class SpellCorrector {
                 }
             }
             entry = dictionary.lookup(candidate.toString());
-            if (entry != null && !checkList.contains(candidate.toString())) {
-                result.add(candidate.toString());
-                checkList.add(candidate.toString());
+            if (entry != null) {
+                try {
+                    List<String> words = dictionary.getWords(entry);
+                    if (words.contains(word)) {
+                        return new String[] {};
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (!checkList.contains(candidate.toString())) {
+                    result.add(candidate.toString());
+                    checkList.add(candidate.toString());
+                }
             }
         }
 
@@ -155,10 +214,10 @@ public class SpellCorrector {
 
         // German dictionary contains capitalized words
         // check for consecutive words keeping this in mind
-        if (word.length() > 3 && word.equals(capitalized(word))) {
+        if (word.length() > 3 && word.equals(capitalize(word))) {
             for (int i = 1; i < word.length() - 2; i++) {
-                String word1 = capitalized(word.substring(0, i));
-                String word2 = capitalized(word.substring(i));
+                String word1 = capitalize(word.substring(0, i));
+                String word2 = capitalize(word.substring(i));
                 DictionaryEntry entry1 = dictionary.lookup(word1);
                 DictionaryEntry entry2 = dictionary.lookup(word2);
                 if (entry1 != null && entry2 != null) {
@@ -168,14 +227,69 @@ public class SpellCorrector {
             }
         }
 
-        return result.toArray(new String[result.size()]);
+        if (result.size() == 0) {
+            // may have a long suffix, try removing chars at the end
+            for (int i = length - 1; i > 0; i--) {
+                String candidate = word.substring(0, i);
+                entry = dictionary.lookup(candidate);
+                if (entry != null) {
+                    try {
+                        List<String> words = dictionary.getWords(entry);
+                        if (words.contains(word)) {
+                            return new String[] {};
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            // may have a long prefix, try removing chars at the beginning
+            for (int i = 1; i < length; i++) {
+                String candidate = word.substring(i);
+                entry = dictionary.lookup(candidate);
+                if (entry != null) {
+                    try {
+                        List<String> words = dictionary.getWords(entry);
+                        if (words.contains(word)) {
+                            return new String[] {};
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        // not found and no suggestions, return current word as result
+        return new String[] { word };
     }
 
-    private String capitalized(String word) {
-        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
+    public String capitalize(String word) {
+        return word.substring(0, 1).toUpperCase(locale) + word.substring(1).toLowerCase(locale);
     }
 
-    private boolean isCapitalized(String word) {
-        return word.equals(capitalized(word));
+    public boolean isCapitalized(String word) {
+        return word.equals(capitalize(word));
+    }
+
+    public String toLowerCase(String word) {
+        return word.toLowerCase(locale);
+    }
+
+    public String toUppercase(String word) {
+        return word.toUpperCase(locale);
+    }
+
+    public boolean isLowercase(String word) {
+        return word.equals(word.toLowerCase(locale));
+    }
+
+    public boolean isUppercase(String word) {
+        return word.equals(word.toUpperCase(locale));
+    }
+
+    public boolean isMixedCase(String word) {
+        return !isLowercase(word) && !isUppercase(word) && !isCapitalized(word);
     }
 }

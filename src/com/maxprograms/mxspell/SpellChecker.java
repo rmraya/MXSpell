@@ -12,7 +12,9 @@ package com.maxprograms.mxspell;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SpellChecker {
@@ -29,7 +31,7 @@ public class SpellChecker {
                 MessageFormat mf = new MessageFormat(Messages.getString("SpellChecker.2"));
                 throw new IOException(mf.format(new String[] { dataFolder.getAbsolutePath() }));
             }
-            dictionary = makeDictionary(dataFolder);
+            dictionary = makeDictionary(language, dataFolder);
         }
         if (dictionary == null) {
             dictionaries = loadDictionaryList(dictionaryFolder);
@@ -38,16 +40,115 @@ public class SpellChecker {
                 throw new IOException(mf.format(new String[] { language }));
             }
             String zip = dictionaries.get(language);
-            dictionary = new Dictionary(zip);
+            dictionary = new Dictionary(language, zip);
         }
         corrector = new SpellCorrector(dictionary, language);
     }
 
     public String[] suggest(String word) {
-        return corrector.suggest(word);
+        String[] suggestions = corrector.suggest(word);
+        if (suggestions.length == 1 && suggestions[0].equals(word)) {
+            // unknown word, try changing case
+            if (checkUppercase(word) || checkCapitalized(word)) {
+                // found a lower case version
+                return new String[] {};
+            }
+            if (checkMixedCase(word)) {
+                // wrong capitalization
+                return new String[] { corrector.capitalize(word), corrector.toLowerCase(word) };
+            }
+            // try removing a char at a time
+            List<String> otherChoices = new ArrayList<>();
+            int length = word.length();
+            for (int i = 0; i < length; i++) {
+                StringBuilder candidateBuilder = new StringBuilder();
+                for (int j = 0; j < length; j++) {
+                    if (i != j) {
+                        candidateBuilder.append(word.charAt(j));
+                    }
+                }
+                String candidate = candidateBuilder.toString();
+                if (checkUppercase(candidate)) {
+                    String uppercase = corrector.toUppercase(candidate);
+                    if (!otherChoices.contains(uppercase)) {
+                        otherChoices.add(uppercase);
+                    }
+                }
+                if (checkCapitalized(candidate)) {
+                    String capitalized = corrector.capitalize(candidate);
+                    if (!otherChoices.contains(capitalized)) {
+                        otherChoices.add(capitalized);
+                    }
+                }
+                String[] alternatives = corrector.suggest(candidate);
+                if (alternatives.length == 0) {
+                    // found a suggestion
+                    if (!otherChoices.contains(candidate)) {
+                        otherChoices.add(candidate);
+                    }
+                }
+            }
+            if (otherChoices.isEmpty()) {
+                return suggestions;
+            }
+            return otherChoices.toArray(new String[otherChoices.size()]);
+        }
+        return suggestions;
     }
 
-    private Dictionary makeDictionary(File dataFolder) throws IOException {
+    private boolean checkUppercase(String word) {
+        if (corrector.isUppercase(word)) {
+            String lower = corrector.toLowerCase(word);
+            String[] alternatives = corrector.suggest(lower);
+            return alternatives.length == 0;
+        }
+        return false;
+    }
+
+    private boolean checkCapitalized(String word) {
+        if (corrector.isCapitalized(word)) {
+            String lower = corrector.toLowerCase(word);
+            String[] alternatives = corrector.suggest(lower);
+            return alternatives.length == 0;
+        }
+        return false;
+    }
+
+    private boolean checkMixedCase(String word) {
+        if (corrector.isMixedCase(word)) {
+            String lower = corrector.toLowerCase(word);
+            String[] alternatives = corrector.suggest(lower);
+            return alternatives.length == 0;
+        }
+        return false;
+    }
+
+    public Map<String, String[]> checkString(String text) {
+        Map<String, String[]> result = new HashMap<>();
+        String[] words = text.split("\s+");
+        for (String word : words) {
+            char first = word.charAt(0);
+            char last = word.charAt(word.length() - 1);
+            while (!Character.isLetter(first) && word.length() > 1) {
+                word = word.substring(1);
+                first = word.charAt(0);
+            }
+            while (!Character.isLetter(last) && word.length() > 1) {
+                word = word.substring(0, word.length() - 1);
+                last = word.charAt(word.length() - 1);
+            }
+            if (word.length() == 1 && !Character.isLetter(first)) {
+                continue;
+            }
+            String[] suggestions = suggest(word);
+            if (suggestions.length > 0) {
+                result.put(word, suggestions);
+            }
+        }
+        return result;
+    }
+
+    private Dictionary makeDictionary(String language, File dataFolder) throws IOException {
         String affix = null;
         String words = null;
         File[] list = dataFolder.listFiles();
@@ -60,7 +161,7 @@ public class SpellChecker {
             }
         }
         if (affix != null && words != null) {
-            return new Dictionary(words, affix);
+            return new Dictionary(language, words, affix);
         }
         return null;
     }
@@ -88,5 +189,13 @@ public class SpellChecker {
             }
         }
         return zips;
+    }
+
+    public void learn(String word) {
+        dictionary.learn(word);
+    }
+
+    public void ignore(String word) {
+        dictionary.ignore(word);
     }
 }
